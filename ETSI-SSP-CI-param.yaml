@@ -1,0 +1,127 @@
+
+CI :
+  Name: "ETSI-SSP-CI"
+  subject :
+    C : "FR"
+    ST: "PARIS"
+    O : "ETSI-SSP-TTF"
+    OU : "ETSI"
+    CN : "ETSI.ORG"
+  serial_number: 1
+  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
+  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  extensions:
+    id-ce-basicConstraints:
+      type_name: 'basicConstraints'
+      critical: True
+      value: 'CA:TRUE, pathlen:1'
+      subject:
+      issuer:
+    id-ce-keyusage:
+      type_name: 'keyUsage'
+      critical: False
+      value: 'digitalSignature'    
+      subject:
+      issuer:
+CA-AAA :
+  Name:  "ETSI-SSP-AAA-CA"
+  subject:
+    C : "FR"
+    ST: "PARIS"
+    O : "ETSI-SSP-TTF"
+    OU : "ETSI"
+    CN : "ETSI.ORG"
+  serial_number: 2
+  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
+  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  extensions:
+    id-ce-basicConstraints:
+      type_name: 'basicConstraints'
+      critical: True
+      value: 'CA:TRUE, pathlen:0'
+      subject:
+      issuer:
+    id-ce-keyusage:
+      type_name: 'keyUsage'
+      critical: False
+      value: 'digitalSignature'    
+      subject:
+      issuer:
+CA-AAS :
+  Name:  "ETSI-SSP-AAS-CA"
+  subject:
+    C : "FR"
+    ST: "PARIS"
+    O : "ETSI-SSP-TTF"
+    OU : "ETSI"
+    CN : "ETSI.ORG"  
+  serial_number: 3 
+  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
+  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  extensions:
+    id-ce-basicConstraints:
+      type_name: 'basicConstraints'
+      critical: True
+      value: 'CA:TRUE, pathlen:0'
+      subject:
+      issuer:  
+    id-ce-keyusage:
+      type_name: 'keyUsage'
+      critical: False
+      value: 'digitalSignature'    
+      subject:
+      issuer:
+    id-ce-CertificatePolicies:
+      type_name: 'certificatePolicies'
+      critical: TRUE
+      value: '0 4 0 3666 1 1'
+      subject:
+      issuer:        
+EE-AAA :
+  Name: "ETSI-SSP-AAA-EE"
+  subject:
+    C : "FR"
+    ST: "PARIS"
+    O : "ETSI-SSP-TTF"
+    OU : "ETSI"
+    CN : "ETSI.ORG"
+  serial_number: 4 
+  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
+  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  extensions:
+    id-ce-basicConstraints:
+      type_name: 'basicConstraints'
+      critical: True
+      value: 'CA:FALSE'
+      subject:
+      issuer:
+    id-ce-keyusage:
+      type_name: 'keyUsage'
+      critical: False
+      value: 'digitalSignature'    
+      subject:
+      issuer:          
+EE-AAS :
+  Name: "ETSI-SSP-AAS-EE"
+  subject:
+    C : "FR"
+    ST: "PARIS"
+    O : "ETSI-SSP-TTF"
+    OU : "ETSI"
+    CN : "ETSI.ORG"
+  serial_number: 5 
+  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
+  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  extensions:
+    id-ce-basicConstraints:
+      type_name: 'basicConstraints'
+      critical: True
+      value: 'CA:FALSE'
+      subject:
+      issuer:
+    id-ce-keyusage:
+      type_name: 'keyUsage'
+      critical: False
+      value: 'digitalSignature'    
+      subject:
+      issuer:        
