@@ -8,19 +8,15 @@ CI :
     OU : "ETSI"
     CN : "ETSI.ORG"
   serial_number: 1
-  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
-  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "CI"
   extensions:
-    id-ce-basicConstraints:
-      type_name: 'basicConstraints'
+    basicConstraints:
       critical: True
-      value: 'CA:TRUE, pathlen:1'
-      subject:
-      issuer:
-    id-ce-keyusage:
-      type_name: 'keyUsage'
-      critical: False
-      value: 'digitalSignature'    
+      value: 
+        CA: True
+        pathlen: 1
       subject:
       issuer:
 CA-AAA :
@@ -31,20 +27,14 @@ CA-AAA :
     O : "ETSI-SSP-TTF"
     OU : "ETSI"
     CN : "ETSI.ORG"
+  issuer: "CI"
   serial_number: 2
-  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
-  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
   extensions:
-    id-ce-basicConstraints:
-      type_name: 'basicConstraints'
+    basicConstraints:
       critical: True
       value: 'CA:TRUE, pathlen:0'
-      subject:
-      issuer:
-    id-ce-keyusage:
-      type_name: 'keyUsage'
-      critical: False
-      value: 'digitalSignature'    
       subject:
       issuer:
 CA-AAS :
@@ -56,21 +46,16 @@ CA-AAS :
     OU : "ETSI"
     CN : "ETSI.ORG"  
   serial_number: 3 
-  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
-  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
-  extensions:
-    id-ce-basicConstraints:
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "CI"
+    extensions:
+    basicConstraints:
       type_name: 'basicConstraints'
       critical: True
       value: 'CA:TRUE, pathlen:0'
       subject:
       issuer:  
-    id-ce-keyusage:
-      type_name: 'keyUsage'
-      critical: False
-      value: 'digitalSignature'    
-      subject:
-      issuer:
     id-ce-CertificatePolicies:
       type_name: 'certificatePolicies'
       critical: TRUE
@@ -86,21 +71,15 @@ EE-AAA :
     OU : "ETSI"
     CN : "ETSI.ORG"
   serial_number: 4 
-  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
-  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  issuer: "CA-AAA"
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
   extensions:
-    id-ce-basicConstraints:
-      type_name: 'basicConstraints'
+    basicConstraints:
       critical: True
       value: 'CA:FALSE'
       subject:
       issuer:
-    id-ce-keyusage:
-      type_name: 'keyUsage'
-      critical: False
-      value: 'digitalSignature'    
-      subject:
-      issuer:          
 EE-AAS :
   Name: "ETSI-SSP-AAS-EE"
   subject:
@@ -110,18 +89,13 @@ EE-AAS :
     OU : "ETSI"
     CN : "ETSI.ORG"
   serial_number: 5 
-  not_before: '20210130120000Z' # YYYYMMDDhhmmssZ
-  not_after: '20211230120000Z' # YYYYMMDDhhmmssZ
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "CA-AAS"
   extensions:
-    id-ce-basicConstraints:
-      type_name: 'basicConstraints'
+    basicConstraints:
       critical: True
       value: 'CA:FALSE'
       subject:
       issuer:
-    id-ce-keyusage:
-      type_name: 'keyUsage'
-      critical: False
-      value: 'digitalSignature'    
-      subject:
-      issuer:        
+    

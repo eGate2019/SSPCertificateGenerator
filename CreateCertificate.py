@@ -32,7 +32,7 @@ class SSPcertificate:
         self.cert_name= certificate_parameter['Name']
         self.public_key  = PublicKey(self.cert_name)
         self.private_key = PrivateKey(self.cert_name)
-  
+
         print ("certificate parameter",certificate_parameter)
         for k, m_field in certificate_parameter.items():
             print(k, "--->", m_field)
