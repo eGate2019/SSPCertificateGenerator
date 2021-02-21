@@ -1,21 +1,22 @@
 import datetime
-import yaml
+import json
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import NameOID
+import io
 
 
 class PublicKey:
-    def __init__(self, name):
 
-        f = open("public_keys/"+name+"-public-key.pem")
-        buf = f.read()
-        f.close()
-        self.public_key = serialization.load_pem_public_key(
-            buf,
-            backend=default_backend()
-        )
+    def __init__(self, name):
+        pu_name = "public_keys/"+name+"-public-key.der"
+        with io.open(pu_name, 'rb') as f:
+            buf = f.read()
+            f.close()
+            self.public_key = serialization.load_der_public_key(
+                buf, backend=default_backend()
+            )
 
     def get(self):
         return self.public_key
@@ -24,11 +25,11 @@ class PublicKey:
 class PrivateKey:
 
     def __init__(self, name):
-        f = open("private_keys/"+name+"-private-key.pem")
+        f = open("private_keys/"+name+"-private-key.der", "rb")
         buf = f.read()
         f.close()
-        self.private_key = serialization.load_pem_private_key(
-            buf,
+        self.private_key = serialization.load_der_private_key(
+            buf, password=None,
             backend=default_backend()
         )
 
@@ -54,8 +55,15 @@ class SSPcertificate:
 
                 if k == "issuer":
                     private_key_issuer = PrivateKey(m_field)
-                    private_key_issuer = PublicKey(m_field)
-
+                    public_key_issuer = PublicKey(m_field)
+                    cert = cert.add_extension(
+                        x509.SubjectKeyIdentifier.from_public_key
+                        (public_key.get()),
+                        critical=False)
+                    cert = cert.issuer_name(x509.Name([
+                        x509.NameAttribute(
+                                NameOID.COMMON_NAME, m_field)
+                    ]))
                 if k == "subject":
                     for k, v in m_field.items():
                         print(k, "<-->", v)
@@ -86,12 +94,12 @@ class SSPcertificate:
                 if k == "serial_number":
                     cert = cert.serial_number(m_field)
                 if k == "not_before":
-                    cert = cert.not_valid_before(datetime.fromisoformat(
-                        m_field)
+                    cert = cert.not_valid_before(
+                        datetime.datetime.fromisoformat(m_field)
                     )
                 if k == "not_after":
-                    cert = cert.not_valid_after(datetime.fromisoformat(
-                        m_field)
+                    cert = cert.not_valid_after(
+                        datetime.datetime.fromisoformat(m_field)
                     )
                 if k == "extensions":
                     for k, v in m_field.items():
@@ -114,30 +122,32 @@ class SSPcertificate:
 
             subject = x509.Name(attribute_subject)
             cert = cert.subject_name(subject)
-            cert = cert.public_key(public_key)
+
+            cert = cert.public_key(public_key.get())
             cert = cert.add_extension(x509.KeyUsage(
                 True, False, False, False, False, False, False, False, False
                 ),
                 critical=True
             )
             cert = cert.sign(
-                private_key_issuer,
+                private_key_issuer.get(),
                 hashes.SHA256(),
                 default_backend()
              )
             # Write our certificate out to disk.
-            with open("certificates/"+self.cert_name+".pem", "wb") as f:
-                f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
+            with open("certificates/"+self.cert_name+".der", "wb") as f:
+                f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
 
         except ValueError as e:
             print("Oops!..", e)
 
 
-with open("ETSI-SSP-CI-param.yaml", 'r') as f:
-    paths = yaml.load_all(f, Loader=yaml.FullLoader)
-    for path in paths:
-        for k, v in path.items():
-            print(k, ":->", v)
-            print("Cert name: "+v["Name"])
-            m_cert = SSPcertificate()
-            m_cert.generate(v)
+f = open("ETSI-SSP-CI-param.json", 'r')
+buf = f.read()
+f.close()
+paths = json.loads(buf)
+for path in paths:
+    records = paths[path]
+    print("Cert name: "+records["Name"])
+    m_cert = SSPcertificate()
+    m_cert.generate(records)

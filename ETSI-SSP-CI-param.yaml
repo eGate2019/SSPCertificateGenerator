@@ -1,101 +1,95 @@
-
-CI :
+CI:
   Name: "ETSI-SSP-CI"
-  subject :
-    C : "FR"
+  subject:
+    C: "FR"
     ST: "PARIS"
-    O : "ETSI-SSP-TTF"
-    OU : "ETSI"
-    CN : "ETSI.ORG"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
   serial_number: 1
   not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
   not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
-  issuer: "CI"
+  issuer: "ETSI-SSP-CI"
   extensions:
     basicConstraints:
       critical: True
       value: 
         CA: True
         pathlen: 1
-      subject:
-      issuer:
-CA-AAA :
+CA-AAA:
   Name:  "ETSI-SSP-AAA-CA"
   subject:
-    C : "FR"
+    C: "FR"
     ST: "PARIS"
-    O : "ETSI-SSP-TTF"
-    OU : "ETSI"
-    CN : "ETSI.ORG"
-  issuer: "CI"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
+  issuer: "ETSI-SSP-CI"
   serial_number: 2
   not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
   not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
   extensions:
     basicConstraints:
       critical: True
-      value: 'CA:TRUE, pathlen:0'
-      subject:
-      issuer:
-CA-AAS :
+      value: 
+        CA: True
+        pathlen: 0
+CA-AAS:
   Name:  "ETSI-SSP-AAS-CA"
   subject:
-    C : "FR"
+    C: "FR"
     ST: "PARIS"
-    O : "ETSI-SSP-TTF"
-    OU : "ETSI"
-    CN : "ETSI.ORG"  
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"  
   serial_number: 3 
   not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
   not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
-  issuer: "CI"
-    extensions:
+  issuer: "ETSI-SSP-CI"
+  extensions:
     basicConstraints:
-      type_name: 'basicConstraints'
       critical: True
-      value: 'CA:TRUE, pathlen:0'
-      subject:
-      issuer:  
+      value: 
+        CA: True
+        pathlen: 0
     id-ce-CertificatePolicies:
       type_name: 'certificatePolicies'
       critical: TRUE
       value: '0 4 0 3666 1 1'
       subject:
       issuer:        
-EE-AAA :
+EE-AAA:
   Name: "ETSI-SSP-AAA-EE"
   subject:
-    C : "FR"
+    C: "FR"
     ST: "PARIS"
-    O : "ETSI-SSP-TTF"
-    OU : "ETSI"
-    CN : "ETSI.ORG"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
   serial_number: 4 
-  issuer: "CA-AAA"
+  issuer: "ETSI-SSP-CA-AAA"
   not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
   not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
   extensions:
     basicConstraints:
       critical: True
-      value: 'CA:FALSE'
-      subject:
-      issuer:
-EE-AAS :
+      value: 
+        CA: False
+EE-AAS:
   Name: "ETSI-SSP-AAS-EE"
   subject:
-    C : "FR"
+    C: "FR"
     ST: "PARIS"
-    O : "ETSI-SSP-TTF"
-    OU : "ETSI"
-    CN : "ETSI.ORG"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
   serial_number: 5 
   not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
   not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
-  issuer: "CA-AAS"
+  issuer: "ETSI-SSP-CA-AAS"
   extensions:
     basicConstraints:
       critical: True
-      value: 'CA:FALSE'
-      subject:
-      issuer:
-    
+      value: 
+        CA: False
+     
