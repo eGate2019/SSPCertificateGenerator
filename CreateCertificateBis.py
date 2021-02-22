@@ -51,22 +51,27 @@ class SSPcertificate:
 
             attribute_subject = []
             for k, m_field in certificate_parameter.items():
-                print(k, "--->", m_field)
 
                 if k == "issuer":
-                    private_key_issuer = PrivateKey(m_field)
-                    public_key_issuer = PublicKey(m_field)
+                    issuer_private_key = PrivateKey(m_field)
+                    issuer_public_key = PublicKey(m_field)
+
                     cert = cert.add_extension(
                         x509.SubjectKeyIdentifier.from_public_key
                         (public_key.get()),
                         critical=False)
+
                     cert = cert.issuer_name(x509.Name([
                         x509.NameAttribute(
                                 NameOID.COMMON_NAME, m_field)
                     ]))
+
+                    cert = cert.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_public_key(
+                            issuer_public_key.get()), critical=True)
+
                 if k == "subject":
                     for k, v in m_field.items():
-                        print(k, "<-->", v)
                         if k == "C":
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.COUNTRY_NAME, v)
@@ -103,7 +108,6 @@ class SSPcertificate:
                     )
                 if k == "extensions":
                     for k, v in m_field.items():
-                        print(k, "<-->", v)
                         if k == "BasicConstraints":
                             if v["value"]["CA"]:
                                 cert = cert.add_extension(
@@ -119,10 +123,22 @@ class SSPcertificate:
                                         ca=False),
                                     critical=v["critical"]
                                 )
+                        if k == "CertificatePolicies":
+                            cert = cert.add_extension(
+                                x509.CertificatePolicies([
+                                    x509.PolicyInformation(
+                                        x509.ObjectIdentifier(
+                                            v["value"]
+                                            ["identifier"]),
+                                        [x509.UserNotice(
+                                            explicit_text=v["value"]
+                                            ["explicit_text"],
+                                            notice_reference=None
+                                            )])
+                                ]),
+                                critical=v["critical"])
 
-            subject = x509.Name(attribute_subject)
-            cert = cert.subject_name(subject)
-
+            cert = cert.subject_name(x509.Name(attribute_subject))
             cert = cert.public_key(public_key.get())
             cert = cert.add_extension(x509.KeyUsage(
                 True, False, False, False, False, False, False, False, False
@@ -130,24 +146,26 @@ class SSPcertificate:
                 critical=True
             )
             cert = cert.sign(
-                private_key_issuer.get(),
+                issuer_private_key.get(),
                 hashes.SHA256(),
                 default_backend()
              )
             # Write our certificate out to disk.
             with open("certificates/"+self.cert_name+".der", "wb") as f:
                 f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
+            with open("certificates/"+self.cert_name+".pem", "wb") as f:
+                f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
 
         except ValueError as e:
             print("Oops!..", e)
 
 
-f = open("ETSI-SSP-CI-param.json", 'r')
+f = open("ETSI-SSP-CI-param.json", 'r', encoding='utf-8')
 buf = f.read()
 f.close()
 paths = json.loads(buf)
 for path in paths:
     records = paths[path]
-    print("Cert name: "+records["Name"])
+    print("Certificate generation: "+records["Name"])
     m_cert = SSPcertificate()
     m_cert.generate(records)

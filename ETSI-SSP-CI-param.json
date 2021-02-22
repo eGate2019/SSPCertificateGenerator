@@ -1,15 +1,17 @@
 {
   "CA-AAS": {
     "extensions": {
-      "id-ce-CertificatePolicies": {
-        "type_name": "certificatePolicies", 
-        "critical": True, 
-        "value": "0 4 0 3666 1 1" 
+      "CertificatePolicies": {
+        "critical": true,
+        "value": {
+          "identifier":"0.4.0.3666.1.1",
+          "explicit_text":"role"
+         }
       }, 
       "basicConstraints": {
-        "critical": True, 
+        "critical": true,
         "value": {
-          "CA": True, 
+          "CA": true, 
           "pathlen": 0
         }
       }
@@ -21,7 +23,7 @@
     "not_before": "2021-01-01T12:00:00", 
     "subject": {
       "C": "FR", 
-      "ST": "PARIS", 
+      "ST": "PACA", 
       "CN": "ETSI.ORG", 
       "O": "ETSI-SSP-TTF", 
       "OU": "ETSI"
@@ -30,9 +32,9 @@
   "CI": {
     "extensions": {
       "basicConstraints": {
-        "critical": True, 
+        "critical": true, 
         "value": {
-          "CA": True, 
+          "CA": true, 
           "pathlen": 1
         }
       }
@@ -44,7 +46,7 @@
     "not_before": "2021-01-01T12:00:00", 
     "subject": {
       "C": "FR", 
-      "ST": "PARIS", 
+      "ST": "PACA", 
       "CN": "ETSI.ORG", 
       "O": "ETSI-SSP-TTF", 
       "OU": "ETSI"
@@ -53,9 +55,9 @@
   "EE-AAA": {
     "extensions": {
       "basicConstraints": {
-        "critical": True, 
+        "critical": true, 
         "value": {
-          "CA": False
+          "CA": false
         }
       }
     }, 
@@ -66,7 +68,7 @@
     "not_before": "2021-01-01T12:00:00", 
     "subject": {
       "C": "FR", 
-      "ST": "PARIS", 
+      "ST": "PACA", 
       "CN": "ETSI.ORG", 
       "O": "ETSI-SSP-TTF", 
       "OU": "ETSI"
@@ -75,9 +77,9 @@
   "CA-AAA": {
     "extensions": {
       "basicConstraints": {
-        "critical": True, 
+        "critical": true, 
         "value": {
-          "CA": True, 
+          "CA": true, 
           "pathlen": 0
         }
       }
@@ -89,7 +91,7 @@
     "not_before": "2021-01-01T12:00:00", 
     "subject": {
       "C": "FR", 
-      "ST": "PARIS", 
+      "ST": "PACA", 
       "CN": "ETSI.ORG", 
       "O": "ETSI-SSP-TTF", 
       "OU": "ETSI"
@@ -98,9 +100,9 @@
   "EE-AAS": {
     "extensions": {
       "basicConstraints": {
-        "critical": True, 
+        "critical": true, 
         "value": {
-          "CA": False
+          "CA": false
         }
       }
     }, 
@@ -111,7 +113,7 @@
     "not_before": "2021-01-01T12:00:00", 
     "subject": {
       "C": "FR", 
-      "ST": "PARIS", 
+      "ST": "PACA", 
       "CN": "ETSI.ORG", 
       "O": "ETSI-SSP-TTF", 
       "OU": "ETSI"
