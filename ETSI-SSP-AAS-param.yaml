@@ -1,0 +1,60 @@
+---
+AAS:
+  - certificate:
+      extensions:
+        basicConstraints:
+          critical: true
+          value:
+            CA: true
+            pathlen: 1
+      Name: ETSI-SSP-CI
+      serial_number: 1
+      not_after: '2021-12-01T12:00:00'
+      issuer: ETSI-SSP-CI
+      not_before: '2021-01-01T12:00:00'
+      subject:
+        C: FR
+        ST: PACA
+        CN: ETSI.ORG
+        O: ETSI-SSP-TTF
+        OU: ETSI
+  - certificate:
+      extensions:
+        CertificatePolicies:
+          critical: true
+          value:
+            identifier: 0.4.0.3666.1.1
+            explicit_text: role
+        basicConstraints:
+          critical: true
+          value:
+            CA: true
+            pathlen: 0
+      Name: ETSI-SSP-AAS-CA
+      serial_number: 3
+      not_after: '2021-12-01T12:00:00'
+      issuer: ETSI-SSP-CI
+      not_before: '2021-01-01T12:00:00'
+      subject:
+        C: FR
+        ST: PACA
+        CN: ETSI.ORG
+        O: ETSI-SSP-TTF
+        OU: ETSI
+  - certificate:
+      extensions:
+        basicConstraints:
+          critical: true
+          value:
+            CA: false
+      Name: ETSI-SSP-AAS-EE
+      serial_number: 5
+      not_after: '2021-12-01T12:00:00'
+      issuer: ETSI-SSP-AAS-CA
+      not_before: '2021-01-01T12:00:00'
+      subject:
+        C: FR
+        ST: PACA
+        CN: ETSI.ORG
+        O: ETSI-SSP-TTF
+        OU: ETSI

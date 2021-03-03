@@ -1,132 +1,210 @@
-from OpenSSL import crypto
-from socket import gethostname
 import yaml
+import datetime
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509.oid import NameOID
+import io
+from ui import UI
 
 
 class PublicKey:
+    """Base class for a handling a public key."""
+
     def __init__(self, name):
-        f = open("public_keys/"+name+"-public-key.pem")
-        buf = f.read()
-        f.close()
-        self.public_key= crypto.load_publickey(crypto.FILETYPE_PEM, buf)    
+        """Instantiate the object."""
+        pu_name = "public_keys/"+name+"-public-key.der"
+        with io.open(pu_name, 'rb') as f:
+            buf = f.read()
+            f.close()
+            self.public_key = serialization.load_der_public_key(
+                buf, backend=default_backend()
+            )
+
     def get(self):
+        """Get the native public key."""
         return self.public_key
 
+
 class PrivateKey:
+    """Base class for a handling a public key."""
+
     def __init__(self, name):
-        f = open("private_keys/"+name+"-private-key.pem")
+        """Instantiate the object."""
+        f = open("private_keys/"+name+"-private-key.der", "rb")
         buf = f.read()
         f.close()
-        self.private_key= crypto.load_privatekey(crypto.FILETYPE_PEM, buf)    
+        self.private_key = serialization.load_der_private_key(
+            buf, password=None,
+            backend=default_backend()
+        )
+
     def get(self):
+        """Get the native private key."""
         return self.private_key
 
+
 class SSPcertificate:
-    curve_name = "brainpoolP384r1"
+    """Base class for a handling a SSP certificate."""
 
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        """Instantiate the object."""
+        self.path = path
 
-    def generate (self, certificate_parameter):
-        cert = crypto.X509()
-        self.cert_name= certificate_parameter['Name']
-        self.public_key  = PublicKey(self.cert_name)
-        self.private_key = PrivateKey(self.cert_name)
+    def generate(self, certificate_parameter):
+        """ Generate a certificate according to a set of parameters."""
+        try:
+            # Creation of the certificate builder
+            cert = x509.CertificateBuilder()
+            self.cert_name = certificate_parameter['Name']
+            # Getting of the certificate public key.
+            public_key = PublicKey(self.cert_name)
 
-        print ("certificate parameter",certificate_parameter)
-        for k, m_field in certificate_parameter.items():
-            print(k, "--->", m_field)
-            if k == "subject" :
-                for k, v in m_field.items():
-                    print(k, "<-->", v)
-                    if k == "C" :
-                        cert.get_subject().C = v
-                    if k == "ST" :   
-                        cert.get_subject().ST = v
-                    if k == "O"  :  
-                        cert.get_subject().O = v
-                    if k== "OU":
-                        cert.get_subject().OU = v
-                    if k == "CN" :    
-                        cert.get_subject().CN = v
-            if k == "serial_number" :
-                cert.set_serial_number(m_field)
-            if k == "not_before":    
-                cert.set_notBefore(bytes(m_field, 'utf-8'))
-            if k == "not_after":    
-                cert.set_notAfter(bytes(m_field, 'utf-8'))   
-            if k == "extensions":
-                for k, v in m_field.items():
-                    print(k, "<-->", v)
-                    if (v["subject"] is None) and (v["issuer"] is None):
-                        extension = crypto.X509Extension(
-                            bytes(v["type_name"],'utf-8'),
-                            v["critical"],
-                            bytes(v["value"],'utf-8'),
-                        )
-                        cert.add_extensions([extension])
-                    if (v["subject"] is not None) and (v["issuer"] is not None):
-                        extension = crypto.X509Extension(
-                            bytes(v["type_name"],'utf-8'),
-                            v["critical"],
-                            bytes(v["value"],'utf-8'),
-                            bytes(v["subject"],'utf-8'),
-                            bytes(v["issuer"],'utf-8')
-                        )
-                        cert.add_extensions([extension])
-                    if (v["subject"] is not None) and (v["issuer"] is None):
-                        extension = crypto.X509Extension(
-                            bytes(v["type_name"],'utf-8'),
-                            v["critical"],
-                            bytes(v["value"],'utf-8'),
-                            bytes(v["subject"],'utf-8')
-                        )
-                        cert.add_extensions([extension])
-                    if (v["subject"] is  None) and (v["issuer"] is not None):
-                        extension = crypto.X509Extension(
-                            bytes(v["type_name"],'utf-8'),
-                            v["critical"],
-                            bytes(v["value"],'utf-8'),
-                            bytes(v["issuer"],'utf-8')
-                        )                        
-                        cert.add_extensions([extension])
+            # Collection of the subjet attributes
+            attribute_subject = []
+            for k, m_field in certificate_parameter.items():
 
-        cert.set_issuer(cert.get_subject())  # self-sign self certificate
-        cert.set_pubkey(self.public_key.get())
-        sig=cert.sign(self.private_key.get(), 'sha256')
-        # pass certificate around, but of course keep private.key
-        open("certificates/"+self.cert_name+".crt", 'wb').write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-        open("certificates/"+self.cert_name+".der", 'wb').write(crypto.dump_certificate(crypto.FILETYPE_ASN1, cert))
-        # Now the real world use case; use certificate to verify signature
+                if k == "issuer":
+                    # Get the issuer private key.
+                    issuer_private_key = PrivateKey(m_field)
+                    # Get the issur public key.
+                    issuer_public_key = PublicKey(m_field)
+                    # Add the Subject Key Identifier extension.
+                    cert = cert.add_extension(
+                        x509.SubjectKeyIdentifier.from_public_key
+                        (public_key.get()),
+                        critical=False)
+                    # Add the issuer common name.
+                    cert = cert.issuer_name(x509.Name([
+                        x509.NameAttribute(
+                                NameOID.COMMON_NAME, m_field)
+                    ]))
+                    # Add the Authority Key Identifier (back chaining)
+                    cert = cert.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_public_key(
+                            issuer_public_key.get()), critical=True)
+
+                if k == "subject":
+                    # Collect of the subject attribute
+                    for k, v in m_field.items():
+                        if k == "C":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.COUNTRY_NAME, v)
+                            )
+                        if k == "ST":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.STATE_OR_PROVINCE_NAME, v))
+                        if k == "O":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.ORGANIZATION_NAME, v)
+                            )
+                        if k == "OU":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.ORGANIZATIONAL_UNIT_NAME, v)
+                            )
+                        if k == "CN":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.COMMON_NAME, v)
+                            )
+                        if k == "L":
+                            attribute_subject.append(x509.NameAttribute(
+                                NameOID.LOCALITY_NAME, v)
+                            )
+
+                if k == "serial_number":
+                    # Add the serial number.
+                    cert = cert.serial_number(m_field)
+                if k == "not_before":
+                    # Add the low limit validity date.
+                    cert = cert.not_valid_before(
+                        datetime.datetime.fromisoformat(m_field)
+                    )
+                if k == "not_after":
+                    # Add the high limit validity date
+                    cert = cert.not_valid_after(
+                        datetime.datetime.fromisoformat(m_field)
+                    )
+                if k == "extensions":
+                    # Collect the extensions.
+                    for k, v in m_field.items():
+                        if k == "BasicConstraints":
+                            # Add the basic constraints extension.
+                            if v["value"]["CA"]:
+                                cert = cert.add_extension(
+                                    x509.BasicConstraints(
+                                        ca=True,
+                                        path_length=v["value"]["pathlen"]
+                                    ),
+                                    critical=v["critical"]
+                                )
+                            else:
+                                cert = cert.add_extension(
+                                    x509.BasicConstraints(
+                                        ca=False),
+                                    critical=v["critical"]
+                                )
+                        if k == "CertificatePolicies":
+                            # Add the certificate policies extension.
+                            cert = cert.add_extension(
+                                x509.CertificatePolicies([
+                                    x509.PolicyInformation(
+                                        x509.ObjectIdentifier(
+                                            v["value"]
+                                            ["identifier"]),
+                                        [x509.UserNotice(
+                                            explicit_text=v["value"]
+                                            ["explicit_text"],
+                                            notice_reference=None
+                                            )])
+                                ]),
+                                critical=v["critical"])
+            # Init the subject name.
+            cert = cert.subject_name(x509.Name(attribute_subject))
+            # Init of the subject public key
+            cert = cert.public_key(public_key.get())
+            # Add the key usage extension
+            cert = cert.add_extension(x509.KeyUsage(
+                True, False, False, False, False, False, False, False, False
+                ),
+                critical=True
+            )
+            # Sign the certificate with the issuer private key.
+            cert = cert.sign(
+                issuer_private_key.get(),
+                hashes.SHA256(),
+                default_backend()
+             )
+            # Write our certificate out to disk.
+            with open("./certificates/"+self.path+"_" +
+                      self.cert_name+".der", "wb") as f:
+                f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
+            with open("./certificates/" +
+                      self.path+"_"+self.cert_name+".pem", "wb") as f:
+                f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
+
+        except ValueError as e:
+            print("Oops!..", e)
+
+# Open the YAML parameter file
 
 
-
-
-with open("ETSI-SSP-CI-param.yaml", 'r') as f:
-    paths = yaml.load_all(f, Loader=yaml.FullLoader)
-    for path in paths:
-        for k,v in path.items():
-            print(k, ":->", v)
-            print("Cert name: "+v["Name"])
-            m_cert = SSPcertificate()
-            m_cert.generate(v)
-
-    #m_cert= SSPcertificate(parameter["Name"])
-    # for k, v in parameter.items():
-    #     print(k, "->", v)
-
-# m_cert.generate()
-
-# f = open("CA.crt")
-# ca_buf = f.read()
-# f.close()
-# ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, ca_buf)
-
-
-# f = open("selfsign.crt")
-# ss_buf = f.read()
-# f.close()
-# ss_cert = crypto.load_certificate(crypto.FILETYPE_PEM, ss_buf)
-
-
-# crypto.verify(ca_cert, ss_cert.signature, ss_cert.data,ss_cert.digest)
+if __name__ == "__main__":
+    my_ui = UI()
+    if my_ui.isInputFile():
+        f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
+        # Load the YAML file containing the parameters.
+        paths = list(yaml.load_all(f, Loader=yaml.FullLoader))
+        f.close()
+        # print(paths)
+        # Scan all certificate parameters.
+        for path in paths:
+            # print("Certification path:", path)
+            for element in path:
+                print(element)
+                for certificate in element:
+                    m_certificate = list(certificate)
+                    print("Certificate generation: ", m_certificate["Name"])
+                    # Instantiate a certificate.
+                    # m_cert = SSPcertificate(element)
+                    # # Generate the certificate according to the parameters.
+                    # m_cert.generate(records)

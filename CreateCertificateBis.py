@@ -5,6 +5,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import NameOID
 import io
+from ui import UI
 
 
 class PublicKey:
@@ -46,9 +47,9 @@ class PrivateKey:
 class SSPcertificate:
     """Base class for a handling a SSP certificate."""
 
-    def __init__(self):
+    def __init__(self, path):
         """Instantiate the object."""
-        pass
+        self.path = path
 
     def generate(self, certificate_parameter):
         """ Generate a certificate according to a set of parameters."""
@@ -174,9 +175,11 @@ class SSPcertificate:
                 default_backend()
              )
             # Write our certificate out to disk.
-            with open("certificates/"+self.cert_name+".der", "wb") as f:
+            with open("./certificates/"+self.path+"_" +
+                      self.cert_name+".der", "wb") as f:
                 f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
-            with open("certificates/"+self.cert_name+".pem", "wb") as f:
+            with open("./certificates/" +
+                      self.path+"_"+self.cert_name+".pem", "wb") as f:
                 f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
 
         except ValueError as e:
@@ -185,19 +188,23 @@ class SSPcertificate:
 # Open the JSON parameter file
 
 
-f = open("ETSI-SSP-CI-param.json", 'r', encoding='utf-8')
-# Read the file to a buffer.
-buf = f.read()
-# Close the file.
-f.close()
-# Load the JSON file containing the parameters.
-paths = json.loads(buf)
-
-# Scan all certificate parameters.
-for path in paths:
-    records = paths[path]
-    print("Certificate generation: "+records["Name"])
-    # Instantiate a certificate.
-    m_cert = SSPcertificate()
-    # Generate the certificate according to the parameters.
-    m_cert.generate(records)
+if __name__ == "__main__":
+    my_ui = UI()
+    if my_ui.isInputFile():
+        f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
+        # Read the file to a buffer.
+        buf = f.read()
+        # Close the file.
+        f.close()
+        # Load the JSON file containing the parameters.
+        paths = json.loads(buf)
+        # Scan all certificate parameters.
+        for path in paths:
+            print("Certification path:", path)
+            for element in paths[path]:
+                records = paths[path][element]
+                print("Certificate generation: "+records["Name"])
+                # Instantiate a certificate.
+                m_cert = SSPcertificate(path)
+                # Generate the certificate according to the parameters.
+                m_cert.generate(records)
