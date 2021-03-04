@@ -200,11 +200,11 @@ if __name__ == "__main__":
         for path in paths:
             # print("Certification path:", path)
             for element in path:
-                print(element)
-                for certificate in element:
-                    m_certificate = list(certificate)
-                    print("Certificate generation: ", m_certificate["Name"])
+                print("Path: ", element)
+                for certificate in path[element]:
+                    m_certificate = certificate['certificate']
+                    print("Certificate generation: ", m_certificate['Name'])
                     # Instantiate a certificate.
-                    # m_cert = SSPcertificate(element)
+                    m_cert = SSPcertificate(element)
                     # # Generate the certificate according to the parameters.
-                    # m_cert.generate(records)
+                    m_cert.generate(m_certificate)
