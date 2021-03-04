@@ -1,5 +1,5 @@
 ---
-AAS:
+AAS: # certification path name
   - certificate:
       extensions:
         basicConstraints:
@@ -7,10 +7,10 @@ AAS:
           value:
             CA: true
             pathlen: 1
-      Name: ETSI-SSP-CI
+      Name: ETSI-SSP-CI # Base name of the certificate
       serial_number: 1
       not_after: '2021-12-01T12:00:00'
-      issuer: ETSI-SSP-CI
+      issuer: ETSI-SSP-CI # Base name of the issuer's keyes
       not_before: '2021-01-01T12:00:00'
       subject:
         C: FR

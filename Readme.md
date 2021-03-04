@@ -13,9 +13,10 @@ The following shell command shall be executed.
 ## Generation of the cerficates
 The followint command shall be executed.
 
-`python3 CreateCertificateBis.py`
+`python3 CreateCertificate.py -i <parameters_file.yaml`
 
+The **parameters_file.yaml** contains the certificate parameters.
 The certificates are generated and stored in the **./certificates** directory with the DER and PEM format.
 The human readable visualization is possible on the following web site [Certlogic](https://certlogik.com/decoder)
 ## Certificate parameters
-Each certificate has its parameters in a JSON structure named ETSI-SSP-CI-Param.json.
+Each certificate has its parameters in a YAML structure in a YAML file.
