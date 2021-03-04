@@ -23,26 +23,26 @@ Each certificate has its parameters in a YAML structure in a YAML file.
 As example, the YAML structure of the AAS certification path from the CI to the End Entity certificate is the following:
 
     AAA: # certification path name
-	    - certificate:
-	        extensions:
-	    		CertificatePolicies:
-	    			critical: true
-    				value:
-						identifier: 0.4.0.3666.1
-						explicit_text: id-role
-				basicConstraints:
-			        critical: true
-			        value:
-				        CA: true
-					    pathlen: 1
-			Name: ETSI-SSP-CI  # Base name of the certificate
-	        serial_number: 1
-	        not_after: '2021-12-01T12:00:00'
-	        issuer: ETSI-SSP-CI  # Base name of the issuer's keys
-	        not_before: '2021-01-01T12:00:00'
-	        subject:
-		        C: FR
-		        ST: PACA
-		        CN: ETSI.ORG
-			    O: ETSI-SSP-TTF
-		        OU: ETSI
+        - certificate:
+            extensions:
+                CertificatePolicies:
+                    critical: true
+                    value:
+                        identifier: 0.4.0.3666.1
+                        explicit_text: id-role
+                basicConstraints:
+                    critical: true
+                    value:
+                        CA: true
+                        pathlen: 1
+            Name: ETSI-SSP-CI  # Base name of the certificate
+            serial_number: 1
+            not_after: '2021-12-01T12:00:00'
+            issuer: ETSI-SSP-CI  # Base name of the issuer's keys
+            not_before: '2021-01-01T12:00:00'
+            subject:
+                C: FR
+                ST: PACA
+                CN: ETSI.ORG
+                O: ETSI-SSP-TTF
+                OU: ETSI
