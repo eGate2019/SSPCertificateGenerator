@@ -5,7 +5,7 @@ This set of programs and files aims at generating the x509v3 certificates used f
 OpenSSL 3.0.0 shall be installed. The guidline for performing the installation are availabe in [OpenSSL](https://www.openssl.org)
 Python Cryptography package shall be installed. The guidline for performing the installation are availabe in [Cryptography.io](https://cryptography.io/en/latest/installation.html) .
 ## Generation of the private and public keys
-The batch file GENKEY.bat contains the OpenSSL instruction for generating the private and public keys acccording to the the annex C of the TS 103.666 part 1.
+The batch file GENKEY.bat contains the OpenSSL instructions for generating the private and public keys acccording to the the annex C of the TS 103.666 part 1.
 The following shell command shall be executed.
 
 `./GENKEY.bat`
