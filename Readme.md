@@ -22,4 +22,4 @@ The human readable visualization is possible on the following web site [Certlogi
 Each certificate has its parameters in a YAML structure in a YAML file.
 As example, the YAML structure of the AAS certification path from the CI to the End Entity certificate is the following:
 
-![Certification path file structure](2021-03-04_20-13-11.png)
+![Certification path file structure](2021-03-04_20-25-08.png)
