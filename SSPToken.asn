@@ -1,0 +1,69 @@
+SSPToken 
+DEFINITIONS
+AUTOMATIC TAGS
+EXTENSIBILITY IMPLIED ::=
+BEGIN
+ECDSA-Sig-Value ::= SEQUENCE {
+	r     INTEGER,
+	s     INTEGER }
+Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }		
+AlgorithmIdentifier  ::=  SEQUENCE  {
+	algorithm               OBJECT IDENTIFIER,
+	parameters              ANY DEFINED BY algorithm OPTIONAL  }
+								-- contains a value of the type
+								-- registered for use with the
+								-- algorithm object identifier value		
+SubjectPublicKeyInfo  ::=  SEQUENCE  {
+	algorithm            AlgorithmIdentifier,
+	subjectPublicKey     BIT STRING  }
+AuthenticationToken ::= SEQUENCE
+{
+	tbsToken TBSToken,
+	signatureAlgorithm AlgorithmIdentifier,
+	signature ECDSA-Sig-Value 
+}
+
+TBSToken ::= SEQUENCE
+{
+	version [0] Version DEFAULT v1,
+	subjectPublicKeyInfo SubjectPublicKeyInfo,
+	aATK-Content ATK-Content,
+	extensions [8] Extensions OPTIONAL
+}
+
+Key-Size ::= INTEGER
+{
+	e128 (0),  -- 128 Bit Key size
+	e256 (1)  -- 256 Bit Key size
+}
+
+StreamCipherIdentifier ::= INTEGER
+{
+	aAES-CGM-StreamCipherIdentifier (0)  -- AES GCM algorithm
+}
+ 
+ATK-Content ::= SEQUENCE 
+{
+	aChallenge OCTET STRING (SIZE (16)),  -- Challenge	
+	aKey-Size Key-Size,
+	aStreamCipherIdentifier StreamCipherIdentifier
+}
+
+
+id-ssp OBJECT IDENTIFIER ::= { itu-t (0) identified-organization (4) etsi (0) smart-secure-platform (3666) part1 (1) }
+id-role OBJECT IDENTIFIER ::= { id-ssp role (1) }
+id-role-aaa OBJECT IDENTIFIER ::= { id-role aaa (1) }
+id-role-aas OBJECT IDENTIFIER ::= { id-role aas (2) }
+Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
+
+Extension  ::=  SEQUENCE  {
+     extnID      OBJECT IDENTIFIER,
+     critical    BOOLEAN DEFAULT FALSE,
+     extnValue   OCTET STRING
+                 -- contains the DER encoding of an ASN.1 value
+                 -- corresponding to the extension type identified
+                 -- by extnID
+     }
+
+
+END

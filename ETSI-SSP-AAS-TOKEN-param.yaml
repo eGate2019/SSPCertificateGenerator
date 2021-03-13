@@ -1,0 +1,9 @@
+
+- Name: "ETSI-SSP-AAS-Token"
+  issuer: "ETSI-SSP-AAS-EE"
+  modeles: 
+    - RFC5280.asn
+    - RFC3279.asn
+    - SSPToken.asn
+
+     

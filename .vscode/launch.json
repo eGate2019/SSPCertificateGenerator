@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["-i","ETSI-SSP-AAS-param.yaml"],
+            "args": ["-i","ETSI-SSP-AAS-TOKEN-param.yaml"],
             "console": "integratedTerminal"
         }
     ]
