@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 import yaml
 from cryptography import x509
@@ -11,6 +12,20 @@ from cryptography.x509.oid import NameOID
 from CreateCertificate import PrivateKey, PublicKey
 from ui import UI
 import asn1tools
+
+
+class RawKey:
+    """Base class for a handling a public key."""
+
+    def __init__(self, name):
+        """Instantiate the object."""
+        f = open("public_keys/"+name+"-public-key.der", "rb")
+        self.public_key = f.read()
+        f.close()
+
+    def get(self):
+        """Get the native public key."""
+        return self.public_key
 
 
 class SSPtoken:
@@ -38,32 +53,30 @@ class SSPtoken:
             cert = x509.CertificateBuilder()
             cert = cert.public_key(public_key)
             # Collection of the subjet attributes
-
             for k, m_field in token_parameter.items():
 
                 if k == "issuer":
                     # Get the issuer private key.
-                    self.issuer_private_key = PrivateKey(m_field)
+                    self.issuer_private_key = PrivateKey(m_field),
                     self.issuer_public_key = PublicKey(m_field)
+      
+            atbsToken = {'version': 'v1'}
+            atbsToken['subjectPublicKeyInfo'] = {}
+            atbsToken['subjectPublicKeyInfo']['algorithm'] = {} 
 
-            tbsToken = self.model.encode(
-                'TBSToken', {
-                    'Version': 'v1',
-                    'SubjectPublicKeyInfo': {
-                        'algorithm': '0000'
-                        },
-                    'ATK-Content': {
-                        'aChallenge': '00'
-
-                        }
-                    })
+            atbsToken['subjectPublicKeyInfo']['algorithm']['algorithm'] = '0.0'
+            atbsToken['subjectPublicKeyInfo']['algorithm']['parameters'] = b'\x01\x01\x01\x01\x01'
+            atbsToken['subjectPublicKeyInfo']['subjectPublicKey'] = (b'\x01\x01\x01\x01\x01', 40)
+            aRand = uuid.uuid4()
+            atbsToken['aATK-Content'] = {
+                'aChallenge': aRand.bytes}
+            atbsToken['aATK-Content']['aKey-Size'] = 0  # 'Key-Size e256'
+            atbsToken['aATK-Content']['aStreamCipherIdentifier'] = 0  # 'aAES-CGM-StreamCipherIdentifier'
+            tbsToken = self.model.encode('TBSToken', atbsToken)
             # Write our token out to disk.
             with open("./tokens/"+self.path+"_" +
                       self.token_name+".der", "wb") as f:
-                f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
-            with open("./tokens/" +
-                      self.path+"_"+self.token_name+".pem", "wb") as f:
-                f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
+                f.write(tbsToken)
 
         except ValueError as e:
             print("Oops!..", e)
