@@ -1,17 +1,17 @@
 import datetime
 import uuid
 
+import asn1tools
 import yaml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization, asymmetric
+from cryptography.hazmat.primitives import asymmetric, hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-
 from cryptography.x509.oid import NameOID
 
+import constante as cts
 from CreateCertificate import PrivateKey, PublicKey
 from ui import UI
-import asn1tools
 
 
 class RawKey:
@@ -38,6 +38,8 @@ class SSPtoken:
     def setModel(self, modeles):
         """Set the ASN.1 model."""
         self.model = asn1tools.compile_files(modeles, 'der')
+        for typ in self.model.types:
+            print(typ)
 
     def generate(self, token_parameter):
         """ Generate a token according to a set of parameters."""
@@ -47,9 +49,13 @@ class SSPtoken:
             self.setModel(token_parameter['modeles'])
             self.token_name = token_parameter['Name']
             # Getting of the token public key.
-            private_key = ec.generate_private_key(ec.SECP256R1)
+            private_key = ec.generate_private_key(ec.BrainpoolP256R1)
             public_key = private_key.public_key()
-
+            public_key_der = public_key.public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            public_key_data= self.model.decode('SubjectPublicKeyInfo', public_key_der)
             cert = x509.CertificateBuilder()
             cert = cert.public_key(public_key)
             # Collection of the subjet attributes
@@ -59,24 +65,30 @@ class SSPtoken:
                     # Get the issuer private key.
                     self.issuer_private_key = PrivateKey(m_field),
                     self.issuer_public_key = PublicKey(m_field)
-      
-            atbsToken = {'version': 'v1'}
-            atbsToken['subjectPublicKeyInfo'] = {}
-            atbsToken['subjectPublicKeyInfo']['algorithm'] = {} 
 
-            atbsToken['subjectPublicKeyInfo']['algorithm']['algorithm'] = '0.0'
-            atbsToken['subjectPublicKeyInfo']['algorithm']['parameters'] = b'\x01\x01\x01\x01\x01'
-            atbsToken['subjectPublicKeyInfo']['subjectPublicKey'] = (b'\x01\x01\x01\x01\x01', 40)
+            atbsToken = {'version': 0}
+            atbsToken['subjectPublicKeyInfo'] = public_key_data
             aRand = uuid.uuid4()
             atbsToken['aATK-Content'] = {
                 'aChallenge': aRand.bytes}
-            atbsToken['aATK-Content']['aKey-Size'] = 0  # 'Key-Size e256'
-            atbsToken['aATK-Content']['aStreamCipherIdentifier'] = 0  # 'aAES-CGM-StreamCipherIdentifier'
+            atbsToken['aATK-Content']['aKey-Size'] = cts.KEY_SIZE_E128  # 'Key-Size e128'
+            atbsToken['aATK-Content']['aStreamCipherIdentifier'] = cts.AES_CGM  # 'aAES-CGM-StreamCipherIdentifier'
             tbsToken = self.model.encode('TBSToken', atbsToken)
+            signature_der = private_key.sign(
+                tbsToken, ec.ECDSA(hashes.SHA256()))
+            signature_data = self.model.decode(
+                'ECDSA-Sig-Value', signature_der)
+            auth_token = {}
+            auth_token['tbsToken'] = atbsToken
+            auth_token['signature'] = signature_data
+            auth_token['signatureAlgorithm'] = {}
+            auth_token['signatureAlgorithm']['algorithm'] = cts.OID_ECDSASHA256
+            auth_token_der = self.model.encode(
+                'AuthenticationToken', auth_token)
             # Write our token out to disk.
             with open("./tokens/"+self.path+"_" +
                       self.token_name+".der", "wb") as f:
-                f.write(tbsToken)
+                f.write(auth_token_der)
 
         except ValueError as e:
             print("Oops!..", e)
