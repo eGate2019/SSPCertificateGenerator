@@ -28,6 +28,7 @@ TBSToken ::= SEQUENCE
 {
 	version [0] Version DEFAULT v1,
 	subjectPublicKeyInfo SubjectPublicKeyInfo,
+	signature            AlgorithmIdentifier,
 	aATK-Content ATK-Content OPTIONAL,
 	extensions [8] Extensions OPTIONAL
 }
@@ -55,7 +56,7 @@ id-ssp OBJECT IDENTIFIER ::= { itu-t (0) identified-organization (4) etsi (0) sm
 id-role OBJECT IDENTIFIER ::= { id-ssp role (1) }
 id-role-aaa OBJECT IDENTIFIER ::= { id-role aaa (1) }
 id-role-aas OBJECT IDENTIFIER ::= { id-role aas (2) }
-Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
+Extensions  ::=  SET SIZE (1..MAX) OF Extension
 
 Extension  ::=  SEQUENCE  {
      extnID      OBJECT IDENTIFIER,
@@ -66,5 +67,8 @@ Extension  ::=  SEQUENCE  {
                  -- by extnID
      }
 
+KeyIdentifier ::= OCTET STRING	 
+AuthorityKeyIdentifier ::= SEQUENCE {
+keyIdentifier             [0] KeyIdentifier           OPTIONAL}
 
 END
