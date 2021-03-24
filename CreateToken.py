@@ -1,7 +1,5 @@
 
 import uuid
-
-
 import asn1tools
 import yaml
 from cryptography import x509
@@ -16,8 +14,22 @@ import constante as cts
 from CreateCertificate import PrivateKey, PublicKey
 from ui import UI
 
+class Certificate(univ.Sequence):
+    """Base class for a certificate."""
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('tbsToken', univ.Sequence()),
+        namedtype.NamedType('signatureAlgorithm', univ.Sequence()),
+        namedtype.NamedType('signature', univ.Sequence())
+    )
+
+
+class CertificationPath(univ.SetOf):
+    """Base class for a certificate lists."""
+    componentType = univ.Sequence()
+
 
 class AuthenticationToken(univ.Sequence):
+    """Base class for an authentication token."""
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('tbsToken', univ.Sequence()),
         namedtype.NamedType('signatureAlgorithm', univ.Sequence()),
@@ -52,32 +64,47 @@ class SSPtoken:
         # for typ in self.model.types:
         #     print(typ)
 
-    def generate(self, token_parameter):
+    def generatePath(self, path_parameters):
+        self.setModel(path_parameters['modeles'])
+        self.certificates = []
+        for certificate in path_parameters['Path']:
+            # Load the certificate from the disk.
+            filename = "./certificates/"+certificate+".der"
+            with open(filename, "rb") as f:
+                certificate_der = f.read()
+                self.certificates.append(decoder.decode(certificate_der,Certificate()))
+
+        self.certificationPath_der = encoder.encode(certificates, CertificationPath)
+    
+    def generateToken(self, token_parameter):
         """ Generate a token according to a set of parameters."""
         try:
             # Creation of the token builder
             print(token_parameter['modeles'])
             self.setModel(token_parameter['modeles'])
             self.token_name = token_parameter['Name']
-            # Getting of the token public key.
+            # Generate a pair of private/public keys for EDCDH operations.
             private_ekey = ec.generate_private_key(ec.BrainpoolP256R1)
+            # Serialize the private key to a DER format
             private_ekey_der = private_ekey.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()
                 )
+            # Save the private key for additional operations.
             with open("private_keys/" + self.token_name+"-private-key.der", "wb") as f:
                 f.write(private_ekey_der)
-
+            # Compute the public key from the private key.
             public_ekey = private_ekey.public_key()
+            # Encode the public key according to the DER format.
             public_key_der = public_ekey.public_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
+            # Create a public key info.
             public_key_data = self.model.decode(
                 'SubjectPublicKeyInfo', public_key_der)
-            cert = x509.CertificateBuilder()
-            cert = cert.public_key(public_ekey)
+
             # Collection of the subjet attributes
             for k, m_field in token_parameter.items():
 
@@ -86,45 +113,61 @@ class SSPtoken:
                     self.issuer_private_key = PrivateKey(m_field).get()
                     self.issuer_public_key = PublicKey(m_field).get()
 
-            atbsToken = {'version': 0}
+            # Create the structure for generating the authentication token body
+            atbsToken = {'version': cts.V1}
+            # Fill the signature parameters
             atbsToken['signature'] = {}
             atbsToken['signature']['algorithm'] = cts.OID_ECDSASHA256
             atbsToken['subjectPublicKeyInfo'] = public_key_data
+            # Generate a challenge as a random
             aRand = uuid.uuid4()
+            # fill the challenge field
             atbsToken['aATK-Content'] = {
                 'aChallenge': aRand.bytes}
+            # Fill the ATK-Content
             atbsToken['aATK-Content']['aKey-Size'] = cts.KEY_SIZE_E128  # 'Key-Size e128'
             atbsToken['aATK-Content']['aStreamCipherIdentifier'] = cts.AES_CGM  # 'aAES-CGM-StreamCipherIdentifier'
-
+            # Create the AKI structure
             m_AKI = x509.AuthorityKeyIdentifier.from_issuer_public_key(
                 self.issuer_public_key)
+            # Fill the AKI extension
             atbsToken['extensions'] = [{}]
             atbsToken['extensions'][0]['extnID'] = cts.OID_AKI
             atbsToken['extensions'][0]['critical'] = True
             atbsToken['extensions'][0]['extnValue'] = m_AKI.key_identifier
-
+            # Encode the TBSToken
             tbsToken = self.model.encode('TBSToken', atbsToken)
+
+            # Generate the signature
             signature_der = self.issuer_private_key.sign(
                 tbsToken, ec.ECDSA(hashes.SHA256()))
+            # Convert the DER format to a dictionary
             signature_data = self.model.decode(
                 'ECDSA-Sig-Value', signature_der)
 
+            # Create the authentication token structure
             auth_token = {}
+            # Fill the authentication token body
             auth_token['tbsToken'] = atbsToken
+            # Fill the authentication token signature
             auth_token['signature'] = signature_data
             auth_token['signatureAlgorithm'] = {}
             auth_token['signatureAlgorithm']['algorithm'] = cts.OID_ECDSASHA256
+            # Encode the authentication token using the DER formaty
             auth_token_der = self.model.encode(
                 'AuthenticationToken', auth_token)
-            # Write our token out to disk.
+            # Save the authentication token on to disk.
             with open("./tokens/"+self.path+"_" +
                       self.token_name+".der", "wb") as f:
                 f.write(auth_token_der)
-            self.verify(token_parameter)  
+            # Verify the authentication token
+            self.verifyToken(token_parameter)
+
         except ValueError as e:
+            # Catch an execption if it is occured
             print("Oops!..", e)
 
-    def verify(self, token_parameter):
+    def verifyToken(self, token_parameter):
         """ Generate a token according to a set of parameters."""
         try:
             # Creation of the token builder
@@ -133,43 +176,51 @@ class SSPtoken:
             for k, m_field in token_parameter.items():
 
                 if k == "issuer":
-                    # Get the issuer private key.
+                    # Get the issuer public key.
                     self.issuer_public_key = PublicKey(m_field).get()         
-            subjectKeyIdentifier = x509.SubjectKeyIdentifier.from_public_key(self.issuer_public_key)
+            # Create a subject key identifier from the issuer public key
+            authorityKeyIdentifier = x509.SubjectKeyIdentifier.from_public_key(self.issuer_public_key)
             auth_token_der = 0
-            # Write our token out to disk.
+            # Load the authentication token from the disk.
             with open("./tokens/"+self.path+"_" +
                       self.token_name+".der", "rb") as f:
                 auth_token_der = f.read()
+
+            # Decode the authentication token DER data
             token_verif = self.model.decode('AuthenticationToken',
                                             auth_token_der
                                             )
+            # Check if the version is right
             if token_verif['tbsToken']['version'] != cts.V1:
                 raise Exception("wrong Version")
-
+            # Check if the signature algorithm identifier is right before
+            # verifying the signature
             if token_verif['tbsToken']['signature']['algorithm'] != cts.OID_ECDSASHA256:
                 raise Exception("wrong Signature algorithm")         
-
+            # Check if the signature streamcipher algorithm identifier is right
             if token_verif['tbsToken']['aATK-Content']['aStreamCipherIdentifier'] not in [cts.AES_CGM]:
                 raise Exception("wrong stream cipher identifier")
-
+            # Check if the key sizz is known
             if token_verif['tbsToken']['aATK-Content']['aKey-Size'] not in [cts.KEY_SIZE_E128, cts.KEY_SIZE_E256]:
                 raise Exception("wrong Key size")
-
+            # Scan the extensions
             m_AKI = b'x00'
             for extension in token_verif['tbsToken']['extensions']:
+                # Check if the extension is AKI
                 if extension['extnID'] == cts.OID_AKI:
+                    # Intermediate saving of the AKI
                     m_AKI = extension['extnValue']
-
-            if subjectKeyIdentifier.digest != m_AKI:
+            # Check if Authority Key Identifier (AKI) is right
+            if authorityKeyIdentifier.digest != m_AKI:
                 raise Exception("wrong AKI")
-
-            value = decoder.decode(
+            # Check if the authentication is well-formed
+            self.authenticationToken = decoder.decode(
                 auth_token_der, asn1Spec=AuthenticationToken()
             )
+            # Verify the signature
             self.issuer_public_key.verify(
-                encoder.encode(value[0].getComponentByPosition(2)),
-                encoder.encode(value[0].getComponentByPosition(0)),
+                encoder.encode(self.authenticationToken[0].getComponentByPosition(2)),
+                encoder.encode(self.authenticationToken[0].getComponentByPosition(0)),
                 ec.ECDSA(hashes.SHA256()))
         except ValueError as e:
             print("Oops!..", e)
@@ -178,19 +229,29 @@ class SSPtoken:
 
 
 if __name__ == "__main__":
-    my_ui = UI()
-    if my_ui.isInputFile():
-        f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
-        # Load the YAML file containing the parameters.
-        paths = list(yaml.load_all(f, Loader=yaml.FullLoader))
-        f.close()
-        # print(paths)
-        # Scan all token parameters.
-        for path in paths:
-            # print("Certification path:", path)
-            for m_token in path:
-                print("token generation: ", m_token['Name'])
-                # Instantiate a token.
-                m_cert = SSPtoken("")
-                # # Generate the token according to the parameters.
-                m_cert.generate(m_token)
+    try:
+        my_ui = UI()
+        if my_ui.isInputFile():
+            f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
+            # Load the YAML file containing the parameters.
+            paths = list(yaml.load_all(f, Loader=yaml.FullLoader))
+            f.close()
+            # print(paths)
+            # Scan all token parameters.
+            m_cert = SSPtoken("")
+            for path in paths:
+                # print("Certification path:", path)
+                for m_token in path:
+                    if m_token == 'CertificationPath':
+                        parameters = path[m_token]
+                        m_cert.generatePath(parameters)
+
+                    if m_token == 'AuthenticationToken':
+                        parameters = path[m_token]
+                        print("token generation: ", parameters['Name'])
+                        # Instantiate a token.
+                        # # Generate the token according to the parameters.
+                        m_cert.generateToken(parameters)
+    
+    except ValueError as e:
+        print("Oops!..", e)

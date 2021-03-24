@@ -1,5 +1,14 @@
 
-- Name: "ETSI-SSP-AAS-Token"
+CertificationPath:
+  Path:
+    - ETSI-SSP-CI
+    - ETSI-SSP-AAA-CA
+    - ETSI-SSP-AAA-EE
+  modeles:
+    - RFC5280.asn
+    - RFC3279.asn
+AuthenticationToken:  
+  Name: "ETSI-SSP-AAS-Token"
   issuer: "ETSI-SSP-AAS-EE"
   modeles: 
     - SSPToken.asn
