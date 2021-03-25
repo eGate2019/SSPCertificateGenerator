@@ -1,16 +1,20 @@
 
 CertificationPath:
+  Name: AAS
   Path:
     - ETSI-SSP-CI
-    - ETSI-SSP-AAA-CA
-    - ETSI-SSP-AAA-EE
+    - ETSI-SSP-AAS-CA
+    - ETSI-SSP-AAS-EE
   modeles:
     - RFC5280.asn
     - RFC3279.asn
 AuthenticationToken:  
-  Name: "ETSI-SSP-AAS-Token"
-  issuer: "ETSI-SSP-AAS-EE"
+  Name: ETSI-SSP-AAS-Token
+  issuer: ETSI-SSP-AAS-EE
+  ECKA-Curve: BrainpoolP256R1
+  keySize: 256
   modeles: 
     - SSPToken.asn
-
+AuthenticationTokenCredentials:
+  Name: ATK_AAS
      
