@@ -6,14 +6,14 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import NameOID
 import io
 from ui import UI
-
+import constante as cts
 
 class PublicKey:
     """Base class for a handling a public key."""
 
     def __init__(self, name):
         """Instantiate the object."""
-        pu_name = "public_keys/"+name+"-public-key.der"
+        pu_name = cts.PATH_PUBLIC + name + "-public-key.der"
         with io.open(pu_name, 'rb') as f:
             buf = f.read()
             f.close()
@@ -31,7 +31,7 @@ class PrivateKey:
 
     def __init__(self, name):
         """Instantiate the object."""
-        f = open("private_keys/"+name+"-private-key.der", "rb")
+        f = open(cts.PATH_PRIVATE + name + "-private-key.der", "rb")
         buf = f.read()
         f.close()
         self.private_key = serialization.load_der_private_key(
@@ -56,7 +56,7 @@ class SSPcertificate:
         try:
             # Creation of the certificate builder
             cert = x509.CertificateBuilder()
-            self.cert_name = certificate_parameter['Name']
+            self.cert_name = certificate_parameter[cts.KW_NAME]
             # Getting of the certificate public key.
             public_key = PublicKey(self.cert_name)
 
@@ -64,7 +64,7 @@ class SSPcertificate:
             attribute_subject = []
             for k, m_field in certificate_parameter.items():
 
-                if k == "issuer":
+                if k == cts.KW_ISSUER:
                     # Get the issuer private key.
                     issuer_private_key = PrivateKey(m_field)
                     # Get the issur public key.
@@ -84,80 +84,81 @@ class SSPcertificate:
                         x509.AuthorityKeyIdentifier.from_issuer_public_key(
                             issuer_public_key.get()), critical=True)
 
-                if k == "subject":
+                if k == cts.KW_SUBJECT:
                     # Collect of the subject attribute
                     for k, v in m_field.items():
-                        if k == "C":
+                        if k == cts.KW_C:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.COUNTRY_NAME, v)
                             )
-                        if k == "ST":
+                        if k == cts.KW_ST:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.STATE_OR_PROVINCE_NAME, v))
-                        if k == "O":
+                        if k == cts.KW_O:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.ORGANIZATION_NAME, v)
                             )
-                        if k == "OU":
+                        if k == cts.KW_OU:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.ORGANIZATIONAL_UNIT_NAME, v)
                             )
-                        if k == "CN":
+                        if k == cts.KW_CN:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.COMMON_NAME, v)
                             )
-                        if k == "L":
+                        if k == cts.KW_LN:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.LOCALITY_NAME, v)
                             )
 
-                if k == "serial_number":
+                if k == cts.KW_SERIAL_NUMBER:
                     # Add the serial number.
                     cert = cert.serial_number(m_field)
-                if k == "not_before":
+                if k == cts.KW_NOT_BEFORE:
                     # Add the low limit validity date.
                     cert = cert.not_valid_before(
                         datetime.datetime.fromisoformat(m_field)
                     )
-                if k == "not_after":
+                if k == cts.KW_NOT_AFTER:
                     # Add the high limit validity date
                     cert = cert.not_valid_after(
                         datetime.datetime.fromisoformat(m_field)
                     )
-                if k == "extensions":
+                if k == cts.KW_EXTENSIONS:
                     # Collect the extensions.
                     for k, v in m_field.items():
-                        if k == "BasicConstraints":
+                        if k == cts.KW_BASICCONSTRAINTS:
                             # Add the basic constraints extension.
-                            if v["value"]["CA"]:
+                            if v[cts.KW_VALUE][cts.KW_CA]:
                                 cert = cert.add_extension(
                                     x509.BasicConstraints(
                                         ca=True,
-                                        path_length=v["value"]["pathlen"]
+                                        path_length=v[cts.KW_VALUE][cts.KW_PATHLEN]
                                     ),
-                                    critical=v["critical"]
+                                    critical=v[cts.KW_CRITICAL]
                                 )
                             else:
                                 cert = cert.add_extension(
                                     x509.BasicConstraints(
+                                        path_length=None ,
                                         ca=False),
-                                    critical=v["critical"]
+                                    critical=v[cts.KW_CRITICAL]
                                 )
-                        if k == "CertificatePolicies":
+                        if k == cts.KW_CERTIFICATEPOLICIES:
                             # Add the certificate policies extension.
                             cert = cert.add_extension(
                                 x509.CertificatePolicies([
                                     x509.PolicyInformation(
                                         x509.ObjectIdentifier(
-                                            v["value"]
-                                            ["identifier"]),
+                                            v[cts.KW_VALUE]
+                                            [cts.KW_IDENTIFIER]),
                                         [x509.UserNotice(
-                                            explicit_text=v["value"]
-                                            ["explicit_text"],
+                                            explicit_text=v[cts.KW_VALUE]
+                                            [cts.KW_EXPLICIT_TEXT],
                                             notice_reference=None
                                             )])
                                 ]),
-                                critical=v["critical"])
+                                critical=v[cts.KW_CRITICAL])
             # Init the subject name.
             cert = cert.subject_name(x509.Name(attribute_subject))
             # Init of the subject public key
@@ -175,11 +176,11 @@ class SSPcertificate:
                 default_backend()
              )
             # Write our certificate out to disk.
-            with open("./certificates/"+self.path+"_" +
+            with open(cts.PATH_CERTIFICATES +
                       self.cert_name+".der", "wb") as f:
                 f.write(cert.public_bytes(encoding=serialization.Encoding.DER))
-            with open("./certificates/" +
-                      self.path+"_"+self.cert_name+".pem", "wb") as f:
+            with open(cts.PATH_CERTIFICATES +
+                      self.cert_name+".pem", "wb") as f:
                 f.write(cert.public_bytes(encoding=serialization.Encoding.PEM))
 
         except ValueError as e:
@@ -187,9 +188,13 @@ class SSPcertificate:
 
 # Open the YAML parameter file
 
-
+defaultConfiguration = {
+    'options':'hi:o',
+    'description':["ifile=", "ofile=","ccommand="],
+    'usage':'CreateCertificate.py -i <inputfile>] [-o <outputfile>]'
+}
 if __name__ == "__main__":
-    my_ui = UI()
+    my_ui = UI(configuration=defaultConfiguration)
     if my_ui.isInputFile():
         f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
         # Load the YAML file containing the parameters.
@@ -197,14 +202,9 @@ if __name__ == "__main__":
         f.close()
         # print(paths)
         # Scan all certificate parameters.
-        for path in paths:
-            # print("Certification path:", path)
-            for element in path:
-                print("Path: ", element)
-                for certificate in path[element]:
-                    m_certificate = certificate['certificate']
-                    print("Certificate generation: ", m_certificate['Name'])
-                    # Instantiate a certificate.
-                    m_cert = SSPcertificate(element)
-                    # # Generate the certificate according to the parameters.
-                    m_cert.generate(m_certificate)
+        for certificate in paths[0]:
+            print("Certificate generation: ", certificate[cts.KW_NAME])
+            # Instantiate a certificate.
+            m_cert = SSPcertificate(certificate[cts.KW_NAME])
+            # # Generate the certificate according to the parameters.
+            m_cert.generate(certificate)

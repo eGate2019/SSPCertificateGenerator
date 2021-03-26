@@ -1,20 +1,22 @@
-
+Challenge:
+  Generate: true
+  Name: AAS01
 CertificationPath:
-  Name: AAS
+  Name: CP_AAS
   Path:
-    - ETSI-SSP-CI
+    - ETSI-SSP-AAS-CI
     - ETSI-SSP-AAS-CA
     - ETSI-SSP-AAS-EE
-  modeles:
+  Modeles:
     - RFC5280.asn
     - RFC3279.asn
 AuthenticationToken:  
-  Name: ETSI-SSP-AAS-Token
-  issuer: ETSI-SSP-AAS-EE
+  Name: ATK-AAS-ECKA
+  Issuer: ETSI-SSP-AAS-EE
   ECKA-Curve: BrainpoolP256R1
-  keySize: 256
-  modeles: 
+  KeySize: 256
+  Modeles: 
     - SSPToken.asn
-AuthenticationTokenCredentials:
-  Name: ATK_AAS
+
+
      

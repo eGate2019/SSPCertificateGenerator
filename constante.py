@@ -16,3 +16,44 @@ KEY_SIZES = {
             128: KEY_SIZE_E128,
             256: KEY_SIZE_E256
             }
+# Keywords in the Yaml configuration file
+
+KW_AUTHENTICATIONTOKEN ='AuthenticationToken'
+KW_AUTHENTICATIONTOKENCREDENTIALS ='AuthenticationTokenCredentials'
+KW_BASICCONSTRAINTS = 'BasicConstraints'
+KW_C = 'C'  
+KW_CA =  'CA' 
+KW_CERTIFICATE = 'Certificate'
+KW_CERTIFICATEPOLICIES = 'CertificatePolicies'
+KW_CERTIFICATIONPATH = 'CertificationPath'
+KW_CHALLENGE = 'Challenge'
+KW_CN = 'CN'  
+KW_CRITICAL =  'Critical'
+KW_ECKA_CURVE ='ECKA-Curve'
+KW_EXPLICIT_TEXT = 'Explicit_text'   
+KW_EXTENSIONS = 'Extensions'
+KW_GENERATE = 'Generate'
+KW_IDENTIFIER =   'Identifier'
+KW_ISSUER ='Issuer'
+KW_KEYSIZE ='KeySize'
+KW_LN = 'LN'
+KW_MODELES ='Modeles'
+KW_NAME = 'Name'
+KW_NOT_AFTER =  'Not_after' 
+KW_NOT_BEFORE = 'Not_before'  
+KW_O = 'O'  
+KW_OU = 'OU'  
+KW_PATH ='Path'
+KW_PATHLEN = 'Pathlen'  
+KW_SERIAL_NUMBER = 'Serial_number'  
+KW_ST = 'ST'  
+KW_SUBJECT = 'Subject'
+KW_VALUE = 'Value'
+
+# Paths of the folders
+
+PATH_PRIVATE = 'private_keys/'
+PATH_PUBLIC = 'public_keys/'
+PATH_CERTIFICATES = 'certificates/'
+PATH_TOKENS = 'tokens/'
+PATH_CREDENTIALS = 'credentials/'

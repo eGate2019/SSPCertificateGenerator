@@ -1,6 +1,9 @@
 {
-    "python.pythonPath": "c:\\users\\alain\\appdata\\local\\programs\\python\\python37-32\\python.exe",
+    "python.pythonPath": "C:\\Users\\Romany\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe",
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "files.associations": {
+        "*.yaml": "home-assistant"
+    }
 }

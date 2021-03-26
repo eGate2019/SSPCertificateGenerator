@@ -1,68 +1,65 @@
-- certificate:
-    extensions:
-      CertificatePolicies:
-        critical: true
-        value:
-          identifier: 0.4.0.3666.1
-          explicit_text: id-role 
-      basicConstraints:
-        critical: true
-        value:
-          CA: true
-          pathlen: 1
-    Name: ETSI-SSP-CI # Base name of the certificate
-    serial_number: 1
-    not_after: '2021-12-01T12:00:00'
-    issuer: ETSI-SSP-CI # Base name of the issuer's keyes
-    not_before: '2021-01-01T12:00:00'
-    subject:
-      C: FR
-      ST: PACA
-      CN: ETSI.ORG
-      O: ETSI-SSP-TTF
-      OU: ETSI
-- certificate:
-    extensions:
-      CertificatePolicies:
-        critical: true
-        value:
-          identifier: 0.4.0.3666.1.2
-          explicit_text: id-role-aas
-      basicConstraints:
-        critical: true
-        value:
-          CA: true
-          pathlen: 0
-    Name: ETSI-SSP-AAS-CA
-    serial_number: 3
-    not_after: '2021-12-01T12:00:00'
-    issuer: ETSI-SSP-CI
-    not_before: '2021-01-01T12:00:00'
-    subject:
-      C: FR
-      ST: PACA
-      CN: ETSI.ORG
-      O: ETSI-SSP-TTF
-      OU: ETSI
-- certificate:
-    extensions:
-      CertificatePolicies:
-        critical: true
-        value:
-          identifier: 0.4.0.3666.1.2.1
-          explicit_text: id-role-aas-ssp   
-      basicConstraints:
-        critical: true
-        value:
-          CA: false
-    Name: ETSI-SSP-AAS-EE
-    serial_number: 5
-    not_after: '2021-12-01T12:00:00'
-    issuer: ETSI-SSP-AAS-CA
-    not_before: '2021-01-01T12:00:00'
-    subject:
-      C: FR
-      ST: PACA
-      CN: ETSI.ORG
-      O: ETSI-SSP-TTF
-      OU: ETSI
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1
+        Explicit_text: id-role      
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: true
+        Pathlen: 1
+  Name: ETSI-SSP-AAS-CI # Base name of the certificate
+  Serial_number: 1
+  Not_after: '2021-12-01T12:00:00'
+  Issuer: ETSI-SSP-AAS-CI # Base name of the Issuer's keys
+  Not_before: '2021-01-01T12:00:00'
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI.ORG
+    O: ETSI-SSP-TTF
+    OU: ETSI
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1.1
+        Explicit_text: id-role-aas
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: true
+        Pathlen: 0
+  Name: ETSI-SSP-AAS-CA
+  Serial_number: 3
+  Not_after: '2021-12-01T12:00:00'
+  Issuer: ETSI-SSP-AAS-CI
+  Not_before: '2021-01-01T12:00:00'
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI.ORG
+    O: ETSI-SSP-TTF
+    OU: ETSI
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1.1.1
+        Explicit_text: id-role-aas-service
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: false
+  Name: ETSI-SSP-AAS-EE
+  Serial_number: 5
+  Not_after: '2021-12-01T12:00:00'
+  Issuer: ETSI-SSP-AAS-CA
+  Not_before: '2021-01-01T12:00:00'
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI.ORG
+    O: ETSI-SSP-TTF
+    OU: ETSI
