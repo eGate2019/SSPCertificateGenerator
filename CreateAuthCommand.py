@@ -15,50 +15,86 @@ from CreateCertificate import PrivateKey, PublicKey
 from ui import UI
 
 
+AAS_MODEL = ['RFC5280.asn', 'RFC3279.asn', 'SSP_ASN.asn']
+
 
 class SSPAuthenticationCommand:
     """Base class for a handling a SSP token."""
 
-    def __init__(self, path):
+    def __init__(self):
         """Instantiate the object."""
-        self.path = path
+        self.setModel(AAS_MODEL)
 
     def setModel(self, modeles):
         """Set the ASN.1 model."""
         self.model = asn1tools.compile_files(modeles, 'der')
-    
-    def generateChallengeCommand(self, parameters):
+        # for type in self.model.types:
+        #     print(type)
+
+    def generateChallengeCommand(self, parameters=None):
         """ Generate the AAS-OP-GET-CHALLENGE-Service-Command."""
-        pass
-    
-    def generateChallengeResponse(self, parameters):
+        m_aas_command = self.model.encode(
+            'AAS-CONTROL-SERVICE-GATE-Commands', ('aAAS-OP-GET-CHALLENGE-Service-Command', {}))
+        with open(cts.PATH_CREDENTIALS + "aAAS-OP-GET-CHALLENGE-Service-Command" +
+                  ".der", "wb") as f:
+            f.write(m_aas_command)
+
+    def generateChallengeResponse(self, parameters=None):
         """ Generate the AAS-OP-GET-CHALLENGE-Service-Response."""
-        pass
-    
+        with open(cts.PATH_CREDENTIALS + "CP_AAS" +
+                  ".der", "rb") as f:
+            aCertificates = f.read()
+        m_aCertificates = self.model.decode('Certificates', aCertificates)
+        with open(cts.PATH_CREDENTIALS + "AAS01" +
+                  ".bin", "rb") as f:
+            aChallenge = f.read()
+
+        m_aas_response = self.model.encode(
+            'AAS-CONTROL-SERVICE-GATE-Responses',
+            ('aAAS-OP-GET-CHALLENGE-Service-Response',
+                {'aParameter': {'aChallenge': aChallenge,
+                                'aCertificates': m_aCertificates
+                                }
+                 }))
+        with open(cts.PATH_CREDENTIALS + "aAAS-OP-GET-CHALLENGE-Service-Response" +
+                  ".der", "wb") as f:
+            f.write(m_aas_response)
+
+    def readChallengeResponse(self, parameters=None):
+        """ Read the AAS-OP-GET-CHALLENGE-Service-Response."""
+        with open(cts.PATH_CREDENTIALS + "aAAS-OP-GET-CHALLENGE-Service-Response" +
+                  ".der", "rb") as f:
+            aResponse = f.read()
+        m_aResponse = self.model.decode('AAS-CONTROL-SERVICE-GATE-Responses', aResponse)
+        print(m_aResponse)
+
     def generateAuthenticateCommand(self, parameters):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Command."""
         pass
-    
+
     def generateAuthenticateResponse(self, parameters):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Response."""
         pass
 
 
-
 # Open the YAML parameter file
-defaultConfiguration = {
-    'options':'hic:o',
-    'description':["ifile=", "ofile=","ccommand="],
-    'usage':'CreateToken.py -c [-i <inputfile>] [-o <outputfile>]'
+AUTHCONFIGURATION = {
+    'options': 'c:h:i:o',
+    'description': ["ifile=", "ofile=", "ccommand="],
+    'usage': 'CreateAuthCommand.py -c <command> [-i <inputfile>] [-o <outputfile>]'
 }
 if __name__ == "__main__":
     try:
-        my_ui = UI(configuration=defaultConfiguration)
+        my_ui = UI(AUTHCONFIGURATION)
+        m_auth = SSPAuthenticationCommand()
         if my_ui.isInputFile():
             f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
             # Load the YAML file containing the parameters.
             paths = list(yaml.load_all(f, Loader=yaml.FullLoader))
             f.close()
+        if my_ui.getCommand() == "challenge":
+            m_auth.generateChallengeResponse()
+            m_auth.readChallengeResponse()
 
     except ValueError as e:
         print("Oops!..", e)

@@ -260,14 +260,15 @@ class SSPtoken:
 
 # Open the YAML parameter file
 
-defaultConfiguration = {
-    'options':'hi:o',
-    'description':["ifile=", "ofile=","ccommand="],
-    'usage':'CreateToken.py -c [-i <inputfile>] [-o <outputfile>]'
+
+tokenConfiguration = {
+    'options': ':c:hi:o',
+    'description': ["ifile=", "ofile=", "ccommand="],
+    'usage': 'CreateToken.py [-c <command>] [-i <inputfile>] [-o <outputfile>]'
 }
 if __name__ == "__main__":
     try:
-        my_ui = UI(configuration=defaultConfiguration)
+        my_ui = UI(tokenConfiguration)
         if my_ui.isInputFile():
             f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
             # Load the YAML file containing the parameters.

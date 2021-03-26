@@ -2,9 +2,9 @@ import sys
 import getopt
 
 defaultConfiguration = {
-    'options':'hi:o',
-    'description':["ifile=", "ofile=","ccommand="],
-    'usage':'CreateCertificateBis.py -c challenge|authentication [-i <inputfile>] [-o <outputfile>]'
+    'options': 'chi:o',
+    'description': ["ifile=", "ofile=", "ccommand="],
+    'usage': 'Program.py -c <challenge|authentication> [-i <inputfile>] [-o <outputfile>]'
 }
 
 class UI:

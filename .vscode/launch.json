@@ -10,7 +10,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["-i","ETSI-SSP-AAA-param.yaml"],
+            "args": ["-c","challenge","-i","ETSI-SSP-AAS-TOKEN-param.yaml"],
             "console": "integratedTerminal",
             "python": "${command:python.interpreterPath}"
         }
