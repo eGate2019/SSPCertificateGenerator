@@ -8,6 +8,7 @@ import io
 from ui import UI
 import constante as cts
 
+
 class PublicKey:
     """Base class for a handling a public key."""
 
@@ -47,42 +48,56 @@ class PrivateKey:
 class SSPcertificate:
     """Base class for a handling a SSP certificate."""
 
-    def __init__(self, path):
+    def __init__(self):
         """Instantiate the object."""
-        self.path = path
+        pass
 
     def generate(self, certificate_parameter):
         """ Generate a certificate according to a set of parameters."""
         try:
             # Creation of the certificate builder
             cert = x509.CertificateBuilder()
-            self.cert_name = certificate_parameter[cts.KW_NAME]
-            # Getting of the certificate public key.
-            public_key = PublicKey(self.cert_name)
 
             # Collection of the subjet attributes
             attribute_subject = []
+            attribute_issuer = []
             for k, m_field in certificate_parameter.items():
 
                 if k == cts.KW_ISSUER:
-                    # Get the issuer private key.
-                    issuer_private_key = PrivateKey(m_field)
-                    # Get the issur public key.
-                    issuer_public_key = PublicKey(m_field)
-                    # Add the Subject Key Identifier extension.
-                    cert = cert.add_extension(
-                        x509.SubjectKeyIdentifier.from_public_key
-                        (public_key.get()),
-                        critical=False)
-                    # Add the issuer common name.
-                    cert = cert.issuer_name(x509.Name([
-                        x509.NameAttribute(
-                                NameOID.COMMON_NAME, m_field)
-                    ]))
+                    # Collect of the issuer attributes
+                    for k, v in m_field.items():
+                        if k == cts.KW_C:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.COUNTRY_NAME, v)
+                            )
+                        if k == cts.KW_ST:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.STATE_OR_PROVINCE_NAME, v))
+                        if k == cts.KW_O:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.ORGANIZATION_NAME, v)
+                            )
+                        if k == cts.KW_OU:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.ORGANIZATIONAL_UNIT_NAME, v)
+                            )
+                        if k == cts.KW_CN:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.COMMON_NAME, v)
+                            )
+                            # Get the issuer private key.
+                            self.issuer_private_key = PrivateKey(v)
+                            # Get the issur public key.
+                            self.issuer_public_key = PublicKey(v)
+                        if k == cts.KW_LN:
+                            attribute_issuer.append(x509.NameAttribute(
+                                NameOID.LOCALITY_NAME, v)
+                            )
+
                     # Add the Authority Key Identifier (back chaining)
                     cert = cert.add_extension(
                         x509.AuthorityKeyIdentifier.from_issuer_public_key(
-                            issuer_public_key.get()), critical=True)
+                            self.issuer_public_key.get()), critical=True)
 
                 if k == cts.KW_SUBJECT:
                     # Collect of the subject attribute
@@ -106,10 +121,21 @@ class SSPcertificate:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.COMMON_NAME, v)
                             )
+                            print("Certificate generation: ", v)
+                            # Getting of the certificate public key.
+                            self.public_key = PublicKey(v)
+                            self.cert_name = v
+
                         if k == cts.KW_LN:
                             attribute_subject.append(x509.NameAttribute(
                                 NameOID.LOCALITY_NAME, v)
                             )
+
+                    # Add the Subject Key Identifier extension.
+                    cert = cert.add_extension(
+                        x509.SubjectKeyIdentifier.from_public_key
+                        (self.public_key.get()),
+                        critical=False)
 
                 if k == cts.KW_SERIAL_NUMBER:
                     # Add the serial number.
@@ -140,7 +166,7 @@ class SSPcertificate:
                             else:
                                 cert = cert.add_extension(
                                     x509.BasicConstraints(
-                                        path_length=None ,
+                                        path_length=None,
                                         ca=False),
                                     critical=v[cts.KW_CRITICAL]
                                 )
@@ -159,10 +185,12 @@ class SSPcertificate:
                                             )])
                                 ]),
                                 critical=v[cts.KW_CRITICAL])
+            # Init the issuer name.
+            cert = cert.issuer_name(x509.Name(attribute_issuer))
             # Init the subject name.
             cert = cert.subject_name(x509.Name(attribute_subject))
             # Init of the subject public key
-            cert = cert.public_key(public_key.get())
+            cert = cert.public_key(self.public_key.get())
             # Add the key usage extension
             cert = cert.add_extension(x509.KeyUsage(
                 True, False, False, False, False, False, False, False, False
@@ -171,7 +199,7 @@ class SSPcertificate:
             )
             # Sign the certificate with the issuer private key.
             cert = cert.sign(
-                issuer_private_key.get(),
+                self.issuer_private_key.get(),
                 hashes.SHA256(),
                 default_backend()
              )
@@ -188,13 +216,14 @@ class SSPcertificate:
 
 # Open the YAML parameter file
 
-defaultConfiguration = {
-    'options':'hi:o',
-    'description':["ifile=", "ofile=","ccommand="],
-    'usage':'CreateCertificate.py -i <inputfile>] [-o <outputfile>]'
+
+CERTCONFIGURATION = {
+    'options': 'c:h:i:o',
+    'description': ["ifile=", "ofile=", "ccommand="],
+    'usage': 'CreateCertificate.py -c <command> [-i <inputfile>] [-o <outputfile>]'
 }
 if __name__ == "__main__":
-    my_ui = UI(configuration=defaultConfiguration)
+    my_ui = UI(CERTCONFIGURATION)
     if my_ui.isInputFile():
         f = open(my_ui.getInputFile(), 'r', encoding='utf-8')
         # Load the YAML file containing the parameters.
@@ -203,8 +232,7 @@ if __name__ == "__main__":
         # print(paths)
         # Scan all certificate parameters.
         for certificate in paths[0]:
-            print("Certificate generation: ", certificate[cts.KW_NAME])
             # Instantiate a certificate.
-            m_cert = SSPcertificate(certificate[cts.KW_NAME])
+            m_cert = SSPcertificate()
             # # Generate the certificate according to the parameters.
             m_cert.generate(certificate)

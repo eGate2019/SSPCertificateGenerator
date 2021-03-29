@@ -51,7 +51,7 @@ class SSPtoken:
     def setModel(self, modeles):
         """Set the ASN.1 model."""
         self.model = asn1tools.compile_files(modeles, 'der')
-    
+ 
     def generateChallenge(self, parameters):
         file_name = cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] + ".bin"
         if parameters[cts.KW_GENERATE]:
@@ -64,7 +64,7 @@ class SSPtoken:
         else:
             with open(file_name, "rb") as f:
                 self.m_challenge = f.read()
-    
+
     def generatePath(self, parameters):
         """ Generate the certification path."""
         # Load the models

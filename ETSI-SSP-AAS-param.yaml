@@ -9,17 +9,21 @@
       Value:
         CA: true
         Pathlen: 1
-  Name: ETSI-SSP-AAS-CI # Base name of the certificate
   Serial_number: 1
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAS-CI # Base name of the Issuer's keys
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAS-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAS-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
 - Extensions:
     CertificatePolicies:
       Critical: true
@@ -31,17 +35,21 @@
       Value:
         CA: true
         Pathlen: 0
-  Name: ETSI-SSP-AAS-CA
   Serial_number: 3
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAS-CI
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAS-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAS-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
 - Extensions:
     CertificatePolicies:
       Critical: true
@@ -52,14 +60,18 @@
       Critical: true
       Value:
         CA: false
-  Name: ETSI-SSP-AAS-EE
   Serial_number: 5
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAS-CA
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAS-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAS-EE
+    O: ETSI.ORG
+    OU: SSP-TTF

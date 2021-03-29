@@ -1,4 +1,4 @@
-- Extensions: # list of the extensions
+- Extensions:
     CertificatePolicies:
       Critical: true
       Value:
@@ -9,57 +9,69 @@
       Value:
         CA: true
         Pathlen: 1
-  Name: ETSI-SSP-AAA-CI # Base name of the certificate
   Serial_number: 1
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAA-CI # Base name of the Issuer's keys
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
 - Extensions:
     CertificatePolicies:
       Critical: true
       Value:
-        Identifier: 0.4.0.3666.1.1
-        Explicit_text: id-role-aaa
+        Identifier: 0.4.0.3666.1.2
+        Explicit_text: id-role-AAA
     BasicConstraints:
       Critical: true
       Value:
         CA: true
         Pathlen: 0
-  Name: ETSI-SSP-AAA-CA
   Serial_number: 3
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAA-CI
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAA-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
 - Extensions:
     CertificatePolicies:
       Critical: true
       Value:
-        Identifier: 0.4.0.3666.1.1.1
+        Identifier: 0.4.0.3666.1.2.1
         Explicit_text: id-role-aaa-application
     BasicConstraints:
       Critical: true
       Value:
         CA: false
-  Name: ETSI-SSP-AAA-EE
   Serial_number: 5
   Not_after: '2021-12-01T12:00:00'
-  Issuer: ETSI-SSP-AAA-CA
   Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
   Subject:
     C: FR
     ST: PACA
-    CN: ETSI.ORG
-    O: ETSI-SSP-TTF
-    OU: ETSI
+    CN: ETSI-SSP-AAA-EE
+    O: ETSI.ORG
+    OU: SSP-TTF

@@ -7,17 +7,19 @@ defaultConfiguration = {
     'usage': 'Program.py -c <challenge|authentication> [-i <inputfile>] [-o <outputfile>]'
 }
 
+
 class UI:
     """Base class for a handling a public key."""
 
-    def __init__(self, configuration = defaultConfiguration):
+    def __init__(self, configuration=defaultConfiguration):
         """ Instiate the UI object."""
         argv = sys.argv[1:]
         self.inputfile = ''
         self.outputfile = ''
         self.command = ''
         try:
-            opts, args = getopt.getopt(argv, configuration['options'], configuration['description'])
+            opts, args = getopt.getopt(argv, configuration['options'],
+                                       configuration['description'])
         except getopt.GetoptError:
             print(configuration['usage'])
             sys.exit(2)
@@ -32,7 +34,7 @@ class UI:
                 self.outputfile = arg
             elif opt in ("-c", "--ccommand"):
                 self.command = arg
-    
+
     def getInputFile(self):
         """Get the inpufile."""
         return self.inputfile
@@ -44,7 +46,7 @@ class UI:
     def getCommand(self):
         """Get the inpufile."""
         return self.command
-    
+
     def isInputFile(self):
         """Return true if the input file exists."""
         return self.inputfile != ''
