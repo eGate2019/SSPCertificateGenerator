@@ -41,11 +41,11 @@ class SSPAuthenticationCommand:
 
     def generateChallengeResponse(self, parameters=None):
         """ Generate the AAS-OP-GET-CHALLENGE-Service-Response."""
-        with open(cts.PATH_CREDENTIALS + "CP_AAS" +
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_PATH] +
                   ".der", "rb") as f:
             aCertificates = f.read()
         m_aCertificates = self.model.decode('Certificates', aCertificates)
-        with open(cts.PATH_CREDENTIALS + "AAS01" +
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_CHALLENGE] +
                   ".bin", "rb") as f:
             aChallenge = f.read()
 
@@ -56,13 +56,13 @@ class SSPAuthenticationCommand:
                                 'aCertificates': m_aCertificates
                                 }
                  }))
-        with open(cts.PATH_CREDENTIALS + "aAAS-OP-GET-CHALLENGE-Service-Response" +
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
                   ".der", "wb") as f:
             f.write(m_aas_response)
 
     def readChallengeResponse(self, parameters=None):
         """ Read the AAS-OP-GET-CHALLENGE-Service-Response."""
-        with open(cts.PATH_CREDENTIALS + "aAAS-OP-GET-CHALLENGE-Service-Response" +
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
                   ".der", "rb") as f:
             aResponse = f.read()
         m_aResponse = self.model.decode('AAS-CONTROL-SERVICE-GATE-Responses',
@@ -87,41 +87,61 @@ class SSPAuthenticationCommand:
                 )
         print(m_aResponse)
 
-    def generateAuthenticateCommand(self, public_key):
+    def generateAuthenticateCommand(self, parameters=None):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Command."""
-        with open(cts.PATH_CREDENTIALS + "CP_AAA" +
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_PATH] +
                   ".der", "rb") as f:
-            aCertificates = f.read()
-        m_aCertificates = self.model.decode('Certificates', aCertificates)
-        with open(cts.PATH_CREDENTIALS + "ATK-AAA-ECKA" +
+            aCertificates_der = f.read()
+        m_aCertificates = self.model.decode('Certificates', aCertificates_der)
+        with open(cts.PATH_TOKENS + parameters[cts.KW_AUTHENTICATIONTOKEN] +
                   ".der", "rb") as f:
             aToken_der = f.read()
             m_aaa_token = self.model.decode('AuthenticationToken', aToken_der)
             m_aas_command = self.model.encode(
                 'AAS-CONTROL-SERVICE-GATE-Commands',
-                'aAAS-OP-AUTHENTICATE-Service-Command', {
-                 'aCredential': {
+                ('aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Command', {
+                 ('aCredential', {
                     'aAccessorTokenCredential': {
                         'aToken': m_aaa_token,
                         'aTokenCertificationPath': m_aCertificates
                         }
                     }
-                }
+                  )
+                 }
+                 )
             )
             with open(cts.PATH_CREDENTIALS +
                       "aAAS-OP-AUTHENTICATE-Service-Command.der",
                       "wb") as f:
                 f.write(m_aas_command)
 
-    def generateAuthenticateResponse(self, parameters):
+    def generateAuthenticateResponse(self, parameters=None):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Response."""
-        pass
+        with open(cts.PATH_TOKENS + parameters[cts.KW_AUTHENTICATIONTOKEN] +
+                  ".der", "rb") as f:
+            aToken_der = f.read()
+            m_aaa_token = self.model.decode('AuthenticationToken', aToken_der)
+            m_aas_command = self.model.encode(
+                'AAS-CONTROL-SERVICE-GATE-Responses',
+                'aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Response', {
+                 'aParameter': {'aServiceToken': m_aaa_token
+                 }
+                }
+            )
+            with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                      ".der",
+                      "wb") as f:
+                f.write(m_aas_command)
 
-    def generateSharedSecret(self, public_key):
+    def generateSharedSecret(self, parameters=None):
 
-        m_atk_aaa_private_key = PrivateKey('ATK-AAA-ECKA').get()
-        shared_key = m_atk_aaa_private_key.exchange(
-            ec.ECDH(), public_key)
+        m_private_key = PrivateKey(parameters[cts.KW_PRIVATE]).get()
+        with open(cts.PATH_TOKENS + parameters[cts.KW_AUTHENTICATIONTOKEN] +
+                  ".der", "rb") as f:
+            aToken_der = f.read()
+            m_token = self.model.decode('AuthenticationToken', aToken_der)
+        shared_key = m_private_key.exchange(
+            ec.ECDH(), m_token['Public'])
         # Perform key derivation.
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
@@ -130,6 +150,7 @@ class SSPAuthenticationCommand:
             info=b'handshake data',
             backend=default_backend()
         ).derive(shared_key)
+        print(derived_key)
 
 
 # Open the YAML parameter file
@@ -138,6 +159,7 @@ AUTHCONFIGURATION = {
     'description': ["ifile=", "ofile=", "ccommand="],
     'usage': 'CreateAuthCommand.py -c <command> [-i <inputfile>] [-o <outputfile>]'
 }
+
 if __name__ == "__main__":
     try:
         my_ui = UI(AUTHCONFIGURATION)
@@ -147,10 +169,19 @@ if __name__ == "__main__":
             # Load the YAML file containing the parameters.
             paths = list(yaml.load_all(f, Loader=yaml.FullLoader))
             f.close()
-        if my_ui.getCommand() == "challenge":
-            m_auth.generateChallengeResponse()
-            m_auth.readChallengeResponse()
-            m_auth.generateAuthenticateCommand()
-    
+            for path in paths:
+                for m_token in path:
+                    parameters = path[m_token]
+                    if m_token == cts.KW_CHALLENGE_COMMAND:
+                        m_auth.generateChallengeCommand(parameters)
+                    if m_token == cts.KW_CHALLENGE_RESPONSE:
+                        m_auth.generateChallengeResponse(parameters)
+                    if m_token == cts.KW_READ_CHALLENGE_RESPONSE:
+                        m_auth.readChallengeResponse(parameters)
+                    if m_token == cts.KW_AUTHENTICATION_COMMAND:
+                        m_auth.generateAuthenticateCommand(parameters)
+                    if m_token == cts.KW_AUTHENTICATION_RESPONSE:
+                        m_auth.generateAuthenticateResponse(parameters)
+
     except ValueError as e:
         print("Oops!..", e)

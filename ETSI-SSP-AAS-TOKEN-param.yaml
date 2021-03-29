@@ -16,7 +16,9 @@ AuthenticationToken:
   ECKA-Curve: BrainpoolP256R1
   KeySize: 256
   Modeles: 
-    - SSPToken.asn
+    - RFC5280.asn     # x509v3 certificate model
+    - RFC3279.asn     # ECC signature parameters
+    - SSP_ASN.asn
 
 
      

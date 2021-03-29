@@ -16,7 +16,8 @@ AuthenticationToken:
   ECKA-Curve: BrainpoolP256R1 # ECC curve for key agreement
   KeySize: 256  # key size of the streamcipher
   Modeles: 
-    - SSPToken.asn  # model of the authentication token
-AuthenticationTokenCredentials:
-  Name: CRD_AAA     # File name of the DER file containing the credential
+    - RFC5280.asn     # x509v3 certificate model
+    - RFC3279.asn     # ECC signature parameters
+    - SSP_ASN.asn
+
      

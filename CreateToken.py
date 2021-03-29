@@ -51,7 +51,7 @@ class SSPtoken:
     def setModel(self, modeles):
         """Set the ASN.1 model."""
         self.model = asn1tools.compile_files(modeles, 'der')
- 
+
     def generateChallenge(self, parameters):
         file_name = cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] + ".bin"
         if parameters[cts.KW_GENERATE]:
@@ -157,7 +157,9 @@ class SSPtoken:
                 'aChallenge': self.m_challenge}
             if parameters[cts.KW_KEYSIZE] not in cts.KEY_SIZES:
                 raise Exception("wrong Key size")
-                        # fill the challenge field
+            # fill the challenge field
+            atbsToken['signatureAlgorithm'] = {}
+            atbsToken['signatureAlgorithm']['algorithm'] = cts.OID_ECDSASHA256
             atbsToken['aATK-Content']['aKey-Size'] = cts.KEY_SIZES[parameters[cts.KW_KEYSIZE]]  # 'Key-Size 128 or 256'
             atbsToken['aATK-Content']['aStreamCipherIdentifier'] = cts.AES_CGM  # 'aAES-CGM-StreamCipherIdentifier'
             # Create the AKI structure
@@ -194,7 +196,7 @@ class SSPtoken:
                       self.token_name+".der", "wb") as f:
                 f.write(auth_token_der)
             # Verify the authentication token
-            self.verifyToken(parameters)
+            # self.verifyToken(parameters)
 
         except ValueError as e:
             # Catch an execption if it is occured
@@ -228,7 +230,7 @@ class SSPtoken:
                 raise Exception("wrong Version")
             # Check if the signature algorithm identifier is right before
             # verifying the signature
-            if token_verif['tbsToken']['signature']['algorithm'] != cts.OID_ECDSASHA256:
+            if token_verif['tbsToken']['signatureAlgorithm']['algorithm'] != cts.OID_ECDSASHA256:
                 raise Exception("wrong Signature algorithm")
             # Check if the signature streamcipher algorithm identifier is right
             if token_verif['tbsToken']['aATK-Content']['aStreamCipherIdentifier'] not in [cts.AES_CGM]:

@@ -446,6 +446,7 @@ TBSToken ::= SEQUENCE
 	version [0] Version DEFAULT v1,
 	subjectPublicKeyInfo SubjectPublicKeyInfo,
 	aATK-Content ATK-Content,
+	signatureAlgorithm[9] AlgorithmIdentifier,
 	extensions [8] Extensions OPTIONAL
 }
 
