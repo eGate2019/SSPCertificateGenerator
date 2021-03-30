@@ -1,17 +1,19 @@
-Challenge command: # Generate a challenge
-  Name: AAS01      # Write a binary file containing a 128 bit challenge
-Challenge response:
-  Path: CP_AAS     # AAS certification path
-  Challenge: AAS01 # Write a binary file containing a 128 bit challenge
-  Name: aAAS-OP-GET-CHALLENGE-Service-Response
-Read Challenge response:
-  Name: aAAS-OP-GET-CHALLENGE-Service-Response
-Authenticate command:
-  Path: CP_AAA
-  AuthenticationToken: ATK-AAA-ECKA
-  Name: aAAS-OP-AUTHENTICATE-Service-Command
-Authenticate response:
-  Authentication token: ATK-AAS-ECKA
+# Challenge command: # Generate a challenge
+#   Name: AAS01      # Write a binary file containing a 128 bit challenge
+# Challenge response:
+#   Path: CP_AAS     # AAS certification path
+#   Challenge: AAS01 # Write a binary file containing a 128 bit challenge
+#   Name: aAAS-OP-GET-CHALLENGE-Service-Response
+# Read Challenge response:
+#   Name: aAAS-OP-GET-CHALLENGE-Service-Response
+# Authenticate command:
+#   Path: CP_AAA
+#   AuthenticationToken: ATK-AAA-ECKA
+#   Name: aAAS-OP-AUTHENTICATE-Service-Command
+# Authenticate response:
+#   AuthenticationToken: ATK-AAS-ECKA
+#   Name: aAAS-OP-AUTHENTICATE-Service-Response 
 Generate shared key:
   Private: ATK-AAA-ECKA
   Public: ATK-AAS-ECKA
+  Diversifier: '\xDD\x61\x11\x6F\xF0\xDD\x57\xF4\x8A\x4F\x52\xEE\x70\x27\x6F\x24' # Root accessor identifier

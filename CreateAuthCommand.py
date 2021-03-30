@@ -3,8 +3,9 @@ import asn1tools
 import yaml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.x509.oid import NameOID
 
@@ -97,19 +98,21 @@ class SSPAuthenticationCommand:
                   ".der", "rb") as f:
             aToken_der = f.read()
             m_aaa_token = self.model.decode('AuthenticationToken', aToken_der)
-            m_aas_command = self.model.encode(
-                'AAS-CONTROL-SERVICE-GATE-Commands',
-                ('aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Command', {
-                 ('aCredential', {
-                    'aAccessorTokenCredential': {
+
+            m_aaa_token_param = {'aCredential': (
+                    'aAccessorTokenCredential', {
                         'aToken': m_aaa_token,
                         'aTokenCertificationPath': m_aCertificates
                         }
-                    }
-                  )
-                 }
-                 )
-            )
+                    )
+            }
+
+            m_aas_command = self.model.encode(
+                'AAS-CONTROL-SERVICE-GATE-Commands',
+                ('aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Command',
+                 m_aaa_token_param)
+                )
+
             with open(cts.PATH_CREDENTIALS +
                       "aAAS-OP-AUTHENTICATE-Service-Command.der",
                       "wb") as f:
@@ -123,10 +126,10 @@ class SSPAuthenticationCommand:
             m_aaa_token = self.model.decode('AuthenticationToken', aToken_der)
             m_aas_command = self.model.encode(
                 'AAS-CONTROL-SERVICE-GATE-Responses',
-                'aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Response', {
-                 'aParameter': {'aServiceToken': m_aaa_token
+                ('aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Response', {
+                 'aParameter': ('aServiceToken', m_aaa_token)
                  }
-                }
+                 )
             )
             with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
                       ".der",
@@ -136,21 +139,88 @@ class SSPAuthenticationCommand:
     def generateSharedSecret(self, parameters=None):
 
         m_private_key = PrivateKey(parameters[cts.KW_PRIVATE]).get()
-        with open(cts.PATH_TOKENS + parameters[cts.KW_AUTHENTICATIONTOKEN] +
+        with open(cts.PATH_TOKENS + parameters[cts.KW_PUBLIC] +
                   ".der", "rb") as f:
             aToken_der = f.read()
             m_token = self.model.decode('AuthenticationToken', aToken_der)
+        m_pk_der = self.model.encode('SubjectPublicKeyInfo',
+                                     m_token['tbsToken']['subjectPublicKeyInfo'])
+        m_public_key = serialization.load_der_public_key(
+                m_pk_der, backend=default_backend()
+            )
+        m_key_size_idx = m_token['tbsToken']['aATK-Content']['aKey-Size']
         shared_key = m_private_key.exchange(
-            ec.ECDH(), m_token['Public'])
+            ec.ECDH(), m_public_key)
         # Perform key derivation.
+        m_SI = cts.SI_KEYS[m_key_size_idx] + bytes(parameters[cts.KW_DIVERSIFIER], 'utf-8')
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
-            length=32,
+            length=cts.MD_LENGTH[m_key_size_idx],
             salt=None,
-            info=b'handshake data',
+            info=m_SI,
             backend=default_backend()
         ).derive(shared_key)
-        print(derived_key)
+        if m_key_size_idx == cts.KEY_SIZE_E128:
+            self.m_gcm_key = derived_key[0:16]
+            self.m_gcm_iv = derived_key[16:32]
+        else:
+            self.m_gcm_key = derived_key[0:32]
+            self.m_gcm_iv = derived_key[32:48]        
+
+    def messageFragment(self, fragment, cb):
+        PL = (16-((len(fragment)+1) % 16) % 16)
+        if cb == 1:
+            H = PL | 128
+        else:
+            H = PL
+        m_message = fragment+bytes(PL)+H.to_bytes(1, byteorder='big')
+        return m_message
+
+    def messageAssembly(self, fragment):
+        m_len_M = len(fragment)
+        H = int.from_bytes(fragment[m_len_M-1:m_len_M],'big')
+        if H > 127:
+            CB = True
+            PL = H-128
+        else:
+            CB = False
+            PL = H
+        return fragment[0:m_len_M-PL-1], CB
+
+    def encrypt(self, plaintext):
+        self.encryptor = Cipher(
+            algorithms.AES(self.m_gcm_key),
+            modes.GCM(self.m_gcm_iv),
+            backend=default_backend()
+            ).encryptor()      
+        # associated_data will be authenticated but not encrypted,
+        # it must also be passed in on decryption.
+        self.encryptor.authenticate_additional_data(b'')
+        # Encrypt the plaintext and get the associated ciphertext.
+        # GCM does not require padding.
+        ciphertext = self.encryptor.update(plaintext) + self.encryptor.finalize()
+
+        return (ciphertext + self.encryptor.tag)
+
+    def decrypt(self, ciphertext):
+        # Construct a Cipher object, with the key, iv, and additionally the
+        # GCM tag used for authenticating the message.
+        len_cipher = len(ciphertext)
+        tag = ciphertext[len_cipher-16:len_cipher]
+        ctext = ciphertext[0:len_cipher-16]
+        self.decryptor = Cipher(
+            algorithms.AES(self.m_gcm_key),
+            modes.GCM(self.m_gcm_iv, tag),
+            backend=default_backend()
+        ).decryptor()
+
+        # We put associated_data back in or the tag will fail to verify
+        # when we finalize the decryptor.
+        self.decryptor.authenticate_additional_data(b'')
+
+        # Decryption gets us the authenticated plaintext.
+        # If the tag does not match an InvalidTag exception will be raised.
+        return self.decryptor.update(ctext) + self.decryptor.finalize()
 
 
 # Open the YAML parameter file
@@ -182,6 +252,8 @@ if __name__ == "__main__":
                         m_auth.generateAuthenticateCommand(parameters)
                     if m_token == cts.KW_AUTHENTICATION_RESPONSE:
                         m_auth.generateAuthenticateResponse(parameters)
+                    if m_token == cts.KW_GENERATE_SHARED_KEY:
+                        m_auth.generateSharedSecret(parameters)
 
     except ValueError as e:
         print("Oops!..", e)

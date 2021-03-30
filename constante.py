@@ -58,7 +58,7 @@ KW_READ_CHALLENGE_RESPONSE = 'Read Challenge response'
 KW_GENERATE_SHARED_KEY = 'Generate shared key'
 KW_PRIVATE = 'Private'
 KW_PUBLIC = 'Public'
-
+KW_DIVERSIFIER = 'Diversifier'
 # Paths of the folders
 
 PATH_PRIVATE = 'private_keys/'
@@ -66,3 +66,10 @@ PATH_PUBLIC = 'public_keys/'
 PATH_CERTIFICATES = 'certificates/'
 PATH_TOKENS = 'tokens/'
 PATH_CREDENTIALS = 'credentials/'
+
+# SI information for derivation keys
+SI128 = b'\x10\x90\x10'
+SI256 = b'\x20\x90\x20'
+SI_KEYS = {KEY_SIZE_E128: SI128, KEY_SIZE_E256: SI256}
+MD_LENGTH = {KEY_SIZE_E128: 32, KEY_SIZE_E256: 48}
+MTU = 256
