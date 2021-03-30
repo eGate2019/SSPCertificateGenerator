@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.x509.oid import NameOID
-
+ 
 import constante as cts
 from CreateCertificate import PrivateKey
 from ui import UI
@@ -137,22 +137,30 @@ class SSPAuthenticationCommand:
                 f.write(m_aas_command)
 
     def generateSharedSecret(self, parameters=None):
+        """Generate the shared secret."""
 
         m_private_key = PrivateKey(parameters[cts.KW_PRIVATE]).get()
+        # Read the authentication token
         with open(cts.PATH_TOKENS + parameters[cts.KW_PUBLIC] +
                   ".der", "rb") as f:
             aToken_der = f.read()
+            # Extract the authentication token with its model
             m_token = self.model.decode('AuthenticationToken', aToken_der)
+        # Convert the public key info from a model to a DER
         m_pk_der = self.model.encode('SubjectPublicKeyInfo',
                                      m_token['tbsToken']['subjectPublicKeyInfo'])
+        # Retrieve the public key from the DER file
         m_public_key = serialization.load_der_public_key(
                 m_pk_der, backend=default_backend()
             )
+        # Extract the key size for the streamcipher
         m_key_size_idx = m_token['tbsToken']['aATK-Content']['aKey-Size']
+        # Compute the shared key
         shared_key = m_private_key.exchange(
             ec.ECDH(), m_public_key)
         # Perform key derivation.
         m_SI = cts.SI_KEYS[m_key_size_idx] + bytes(parameters[cts.KW_DIVERSIFIER], 'utf-8')
+        # Derive the key for the SI info
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
             length=cts.MD_LENGTH[m_key_size_idx],
@@ -160,32 +168,38 @@ class SSPAuthenticationCommand:
             info=m_SI,
             backend=default_backend()
         ).derive(shared_key)
+        # Storage of the GCM key and IV
         if m_key_size_idx == cts.KEY_SIZE_E128:
             self.m_gcm_key = derived_key[0:16]
             self.m_gcm_iv = derived_key[16:32]
         else:
             self.m_gcm_key = derived_key[0:32]
-            self.m_gcm_iv = derived_key[32:48]        
+            self.m_gcm_iv = derived_key[32:48]
+             
 
-    def messageFragment(self, fragment, cb):
-        PL = (16-((len(fragment)+1) % 16) % 16)
+    def messageFragment(self, message_fragment, cb):
+        """ Create a message fragment."""
+        PL = (16-((len(message_fragment)+1) % 16) % 16)
         if cb == 1:
             H = PL | 128
         else:
             H = PL
-        m_message = fragment+bytes(PL)+H.to_bytes(1, byteorder='big')
+        m_message = message_fragment+bytes(PL)+H.to_bytes(1, byteorder='big')
+        # Return the message fragment ready for encryption
         return m_message
 
-    def messageAssembly(self, fragment):
-        m_len_M = len(fragment)
-        H = int.from_bytes(fragment[m_len_M-1:m_len_M],'big')
+    def messageAssembly(self, message_fragment):
+        """Allow the fragment message assembly."""
+        m_len_M = len(message_fragment)
+        H = int.from_bytes(message_fragment[m_len_M-1:m_len_M],'big')
         if H > 127:
             CB = True
             PL = H-128
         else:
             CB = False
             PL = H
-        return fragment[0:m_len_M-PL-1], CB
+        # return the plaintext message fragment and the chaining bit
+        return message_fragment[0:m_len_M-PL-1], CB
 
     def encrypt(self, plaintext):
         self.encryptor = Cipher(
