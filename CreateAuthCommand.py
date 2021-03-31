@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.x509.oid import NameOID
- 
+
 import constante as cts
 from CreateCertificate import PrivateKey
 from ui import UI
@@ -159,7 +159,8 @@ class SSPAuthenticationCommand:
         shared_key = m_private_key.exchange(
             ec.ECDH(), m_public_key)
         # Perform key derivation.
-        m_SI = cts.SI_KEYS[m_key_size_idx] + bytes(parameters[cts.KW_DIVERSIFIER], 'utf-8')
+        m_SI = cts.SI_KEYS[m_key_size_idx] + bytes.fromhex(
+            parameters[cts.KW_DIVERSIFIER])
         # Derive the key for the SI info
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
@@ -170,16 +171,91 @@ class SSPAuthenticationCommand:
         ).derive(shared_key)
         # Storage of the GCM key and IV
         if m_key_size_idx == cts.KEY_SIZE_E128:
-            self.m_gcm_key = derived_key[0:16]
-            self.m_gcm_iv = derived_key[16:32]
+            m_gcm_key = derived_key[0:16]
+            m_gcm_iv = derived_key[16:32]
         else:
-            self.m_gcm_key = derived_key[0:32]
-            self.m_gcm_iv = derived_key[32:48]
-             
+            m_gcm_key = derived_key[0:32]
+            m_gcm_iv = derived_key[32:48]
+        m_model = asn1tools.compile_files(['SSPToken.asn'], 'der')
+        m_save_der = m_model.encode('GCM-Parameters', {
+            'aKey': m_gcm_key,
+            'aIV': m_gcm_iv
+        })
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der",
+                  "wb") as f:
+            f.write(m_save_der)
+
+    def encryptLargeMessage(self, parameters=None):
+        """Encrypt large message from an input file."""
+
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der",
+                  "rb") as f:
+            m_data = f.read()
+        m_model = asn1tools.compile_files(['SSPToken.asn'], 'der')    
+        m_gcm = m_model.decode('GCM-Parameters', m_data)
+        # Read IV and key
+        self.m_gcm_key = m_gcm['aKey']
+        self.m_gcm_iv = m_gcm['aIV']
+        # Read the input file
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_IN] +
+                  ".bin",
+                  "rb") as f:
+            m_large_message = f.read()
+        m_mtu = parameters[cts.KW_MTU]
+        m_nb_bloc = int((len(m_large_message)+(m_mtu-1)) / (m_mtu-1))
+        m_start = 0
+        m_end = 0
+        # Write the encrypted output file
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_OUT] +
+                  ".bin",
+                  "wb") as f:
+            for i in range(m_nb_bloc):
+                m_end = m_start + min(len(m_large_message)-m_end, m_mtu-1)
+                m = self.messageFragment(m_large_message[m_start:m_end],
+                                         (i == m_nb_bloc))
+                m_start = m_end
+                m = self.encrypt(m)
+                f.write(m)
+
+    def decryptLargeMessage(self, parameters=None):
+        """ Decrypt a large file from an input file."""
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der",
+                  "rb") as f:
+            m_data = f.read()
+        m_model = asn1tools.compile_files(['SSPToken.asn'], 'der')    
+        m_gcm = m_model.decode('GCM-Parameters', m_data)
+        # Read IV and key
+        self.m_gcm_key = m_gcm['aKey']
+        self.m_gcm_iv = m_gcm['aIV']
+        # Read the encrypted input file
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_IN] +
+                  ".bin",
+                  "rb") as f:
+            m_large_message = f.read()
+        m_mtu = parameters[cts.KW_MTU]
+        m_nb_bloc = int((len(m_large_message) / (m_mtu+16))+1)
+        m_start = 0
+        m_end = 0
+        # Write the plaintext output file
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_OUT] +
+                  ".bin",
+                  "wb") as f:
+            for i in range(m_nb_bloc):
+                m_end = m_start + min(len(m_large_message)-m_end, m_mtu+16)
+                m = m_large_message[m_start:m_end]
+                m_start = m_end
+                m = self.decrypt(m)
+                m, c = self.messageAssembly(m)
+                f.write(m)
 
     def messageFragment(self, message_fragment, cb):
         """ Create a message fragment."""
-        PL = (16-((len(message_fragment)+1) % 16) % 16)
+        PL = (len(message_fragment)+1) % 16
+        if PL > 0:
+            PL = 16 - PL
         if cb == 1:
             H = PL | 128
         else:
@@ -191,7 +267,7 @@ class SSPAuthenticationCommand:
     def messageAssembly(self, message_fragment):
         """Allow the fragment message assembly."""
         m_len_M = len(message_fragment)
-        H = int.from_bytes(message_fragment[m_len_M-1:m_len_M],'big')
+        H = int.from_bytes(message_fragment[m_len_M-1:m_len_M], 'big')
         if H > 127:
             CB = True
             PL = H-128
@@ -268,6 +344,9 @@ if __name__ == "__main__":
                         m_auth.generateAuthenticateResponse(parameters)
                     if m_token == cts.KW_GENERATE_SHARED_KEY:
                         m_auth.generateSharedSecret(parameters)
-
+                    if m_token == cts.KW_ENCRYPT:
+                        m_auth.encryptLargeMessage(parameters)
+                    if m_token == cts.KW_DECRYPT:
+                        m_auth.decryptLargeMessage(parameters)
     except ValueError as e:
         print("Oops!..", e)

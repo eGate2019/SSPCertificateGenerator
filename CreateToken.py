@@ -90,20 +90,6 @@ class SSPtoken:
                       ".der", "wb") as f:
                 f.write(certificationPath_der)
 
-    def generateCredentials(self, parameters):
-        """ Generate the Authentication credentials for the AAS-OP-AUTHENTICATE-Command."""
-        self.atk = AuthenticationTokenCredential()
-        # Load the authentication token previously computed
-        self.atk.setComponentByName('token', value=self.authenticationToken[0])
-        # Load the certification path previously computed
-        self.atk.setComponentByName(cts.KW_PATH, value=self.path)
-        if cts.KW_NAME in parameters:
-            # Serialize the authentication token
-            authenticationTokenCredential_der = encoder.encode(self.atk)
-            with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
-                    ".der", "wb") as f:
-                f.write(authenticationTokenCredential_der)
-
     def generateToken(self, parameters):
         """ Generate a token according to a set of parameters."""
         try:
@@ -287,9 +273,6 @@ if __name__ == "__main__":
 
                     if m_token == cts.KW_CERTIFICATIONPATH:
                         m_cert.generatePath(parameters)
-
-                    if m_token == cts.KW_AUTHENTICATIONTOKENCREDENTIALS:
-                        m_cert.generateCredentials(parameters)
 
                     if m_token == cts.KW_AUTHENTICATIONTOKEN:
                         print("token generation: ", parameters[cts.KW_NAME])

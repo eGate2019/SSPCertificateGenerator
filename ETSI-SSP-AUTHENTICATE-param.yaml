@@ -16,4 +16,15 @@
 Generate shared key:
   Private: ATK-AAA-ECKA
   Public: ATK-AAS-ECKA
-  Diversifier: '\xDD\x61\x11\x6F\xF0\xDD\x57\xF4\x8A\x4F\x52\xEE\x70\x27\x6F\x24' # Root accessor identifier
+  Diversifier: 'DD61116FF0DD57F48A4F52EE70276F24' # Root accessor identifier
+  Name: GCM_AAA_AAS
+Encrypt:
+  Name: GCM_AAA_AAS # Container for the derived keys/IV
+  MTU: 240
+  In: Text_In
+  Out: Text_Out
+Decrypt:
+  Name: GCM_AAA_AAS
+  MTU: 240
+  In: Text_Out
+  Out: Text_Out_bis

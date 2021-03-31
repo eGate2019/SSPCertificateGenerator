@@ -70,5 +70,8 @@ Extension  ::=  SEQUENCE  {
 KeyIdentifier ::= OCTET STRING	 
 AuthorityKeyIdentifier ::= SEQUENCE {
 keyIdentifier             [0] KeyIdentifier           OPTIONAL}
-
+GCM-Parameters ::=SEQUENCE {
+	aKey	OCTET STRING,
+	aIV	OCTET STRING
+}
 END
