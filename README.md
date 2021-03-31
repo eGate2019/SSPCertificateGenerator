@@ -79,6 +79,7 @@ The **parameters_file.yaml** contains the authentication token parameters.
 ## Generation of the accessor authentication commands and responses.
 The following command allows to generate the commands for the accessor authentication service:
 `python3 CreateAuthCommand.py -i <parameters_file.yaml`
+
     Challenge command: # Generate a challenge
         Name: AAS01      # Write a binary file containing a 128 bit challenge
     Challenge response:
