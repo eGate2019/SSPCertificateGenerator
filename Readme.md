@@ -22,27 +22,61 @@ The human readable visualization is possible on the following web site [Certlogi
 Each certificate has its parameters in a YAML structure in a YAML file.
 As example, the YAML structure of the AAS certification path from the CI to the End Entity certificate is the following:
 
-    AAA: # certification path name
-        - certificate:
-            extensions:
-                CertificatePolicies:
-                    critical: true
-                    value:
-                        identifier: 0.4.0.3666.1
-                        explicit_text: id-role
-                basicConstraints:
-                    critical: true
-                    value:
-                        CA: true
-                        pathlen: 1
-            Name: ETSI-SSP-CI  # Base name of the certificate
-            serial_number: 1
-            not_after: '2021-12-01T12:00:00'
-            issuer: ETSI-SSP-CI  # Base name of the issuer's keys
-            not_before: '2021-01-01T12:00:00'
-            subject:
-                C: FR
-                ST: PACA
-                CN: ETSI.ORG
-                O: ETSI-SSP-TTF
-                OU: ETSI
+    - Extensions:
+        CertificatePolicies:
+            Critical: true
+            Value:
+                Identifier: 0.4.0.3666.1.2
+                Explicit_text: id-role-AAA
+        BasicConstraints:
+            Critical: true
+            Value:
+                CA: true
+                Pathlen: 0
+    Serial_number: 3
+    Not_after: '2021-12-01T12:00:00'
+    Not_before: '2021-01-01T12:00:00'
+    Issuer:
+            C: FR
+            ST: PACA
+            CN: ETSI-SSP-AAA-CI
+            O: ETSI.ORG
+            OU: SSP-TTF
+    Subject:
+            C: FR
+            ST: PACA
+            CN: ETSI-SSP-AAA-CA
+            O: ETSI.ORG
+            OU: SSP-TTF
+## Generation of the authentication token
+The following command allows to generate an authentication token:
+`python3 CreateToken.py -i <parameters_file.yaml`
+
+The **parameters_file.yaml** contains the authentication token parameters.
+
+    Challenge:
+    Generate: false # Do not generate a challenge
+    Name: AAS01     # File name of the file containing the challenge
+    CertificationPath: 
+    Name: CP_AAA    # File name of the DER file containing the certification path
+    Path:
+        - ETSI-SSP-AAA-CI # AAA CI
+        - ETSI-SSP-AAA-CA # AAA CA
+        - ETSI-SSP-AAA-EE # AAA EE
+    Modeles:
+        - RFC5280.asn     # x509v3 certificate model
+        - RFC3279.asn     # ECC signature parameters
+    AuthenticationToken:  
+    Name: ATK-AAA-ECKA    # File name of the authentication token DER file
+    Issuer: ETSI-SSP-AAA-EE # Certificatte verifying the authentication token
+    ECKA-Curve: BrainpoolP256R1 # ECC curve for key agreement
+    KeySize: 256  # key size of the streamcipher
+    Modeles: 
+        - RFC5280.asn     # x509v3 certificate model
+        - RFC3279.asn     # ECC signature parameters
+        - SSP_ASN.asn     # SSP model
+
+## Generation of the accessor authentication commands and responses.
+The following command allows to generate the commands for the accessor authentication service:
+`python3 CreateAuthCommand.py -i <parameters_file.yaml`
+The **parameters_file.yaml** contains the authentication token parameters.
