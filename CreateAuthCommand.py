@@ -159,8 +159,10 @@ class SSPAuthenticationCommand:
         shared_key = m_private_key.exchange(
             ec.ECDH(), m_public_key)
         # Perform key derivation.
-        m_SI = cts.SI_KEYS[m_key_size_idx] + bytes.fromhex(
-            parameters[cts.KW_DIVERSIFIER])
+        m_diversifier = bytes(a ^ b for (a, b) in zip(
+            m_token['tbsToken']['aATK-Content']['aChallenge'],
+            bytes.fromhex(parameters[cts.KW_DIVERSIFIER])))
+        m_SI = cts.SI_KEYS[m_key_size_idx] + m_diversifier
         # Derive the key for the SI info
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
@@ -188,7 +190,7 @@ class SSPAuthenticationCommand:
 
     def encryptLargeMessage(self, parameters=None):
         """Encrypt large message from an input file."""
-
+        self.m_counter = parameters[cts.KW_SEQUENCE]
         with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
                   ".der",
                   "rb") as f:
@@ -236,7 +238,7 @@ class SSPAuthenticationCommand:
                   "rb") as f:
             m_large_message = f.read()
         m_mtu = parameters[cts.KW_MTU]
-        m_nb_bloc = int((len(m_large_message) / (m_mtu+16))+1)
+        m_nb_bloc = int((len(m_large_message) / (m_mtu + 16 + cts.SCL_SIZE_SEQ))+1)
         m_start = 0
         m_end = 0
         # Write the plaintext output file
@@ -244,10 +246,11 @@ class SSPAuthenticationCommand:
                   ".bin",
                   "wb") as f:
             for i in range(m_nb_bloc):
-                m_end = m_start + min(len(m_large_message)-m_end, m_mtu+16)
-                m = m_large_message[m_start:m_end]
+                m_end = m_start + min(len(m_large_message)-m_end, m_mtu+16 + cts.SCL_SIZE_SEQ)
+                seq = m_large_message[m_start:m_start + cts.SCL_SIZE_SEQ]
+                m = m_large_message[m_start + cts.SCL_SIZE_SEQ:m_end]
                 m_start = m_end
-                m = self.decrypt(m)
+                m = self.decrypt(m, seq)
                 m, c = self.messageAssembly(m)
                 f.write(m)
 
@@ -278,9 +281,10 @@ class SSPAuthenticationCommand:
         return message_fragment[0:m_len_M-PL-1], CB
 
     def encrypt(self, plaintext):
+        m_seq = self.m_counter.to_bytes(cts.SCL_SIZE_SEQ, 'big')
         self.encryptor = Cipher(
             algorithms.AES(self.m_gcm_key),
-            modes.GCM(self.m_gcm_iv),
+            modes.GCM(self.m_gcm_iv[0:16-cts.SCL_SIZE_SEQ] + m_seq),
             backend=default_backend()
             ).encryptor()      
         # associated_data will be authenticated but not encrypted,
@@ -289,10 +293,10 @@ class SSPAuthenticationCommand:
         # Encrypt the plaintext and get the associated ciphertext.
         # GCM does not require padding.
         ciphertext = self.encryptor.update(plaintext) + self.encryptor.finalize()
+        self.m_counter = self.m_counter + 1
+        return (m_seq+ciphertext + self.encryptor.tag)
 
-        return (ciphertext + self.encryptor.tag)
-
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext, m_seq):
         # Construct a Cipher object, with the key, iv, and additionally the
         # GCM tag used for authenticating the message.
         len_cipher = len(ciphertext)
@@ -300,7 +304,7 @@ class SSPAuthenticationCommand:
         ctext = ciphertext[0:len_cipher-16]
         self.decryptor = Cipher(
             algorithms.AES(self.m_gcm_key),
-            modes.GCM(self.m_gcm_iv, tag),
+            modes.GCM(self.m_gcm_iv[0:16-cts.SCL_SIZE_SEQ] + m_seq, tag),
             backend=default_backend()
         ).decryptor()
 

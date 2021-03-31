@@ -21,6 +21,7 @@ Generate shared key:
 Encrypt:
   Name: GCM_AAA_AAS # Container for the derived keys/IV
   MTU: 240
+  Sequence: 1
   In: Text_In
   Out: Text_Out
 Decrypt:

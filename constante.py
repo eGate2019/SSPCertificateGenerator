@@ -50,6 +50,7 @@ KW_OU = 'OU'
 KW_OUT = 'Out'
 KW_PATH = 'Path'
 KW_PATHLEN = 'Pathlen'
+KW_SEQUENCE = 'Sequence'
 KW_SERIAL_NUMBER = 'Serial_number'
 KW_ST = 'ST'
 KW_SUBJECT = 'Subject'
@@ -77,3 +78,5 @@ SI128 = b'\x10\x90\x10'
 SI256 = b'\x20\x90\x20'
 SI_KEYS = {KEY_SIZE_E128: SI128, KEY_SIZE_E256: SI256}
 MD_LENGTH = {KEY_SIZE_E128: 32, KEY_SIZE_E256: 48}
+# secure SCL 
+SCL_SIZE_SEQ = 4
