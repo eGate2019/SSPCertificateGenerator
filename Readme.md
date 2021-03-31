@@ -79,4 +79,34 @@ The **parameters_file.yaml** contains the authentication token parameters.
 ## Generation of the accessor authentication commands and responses.
 The following command allows to generate the commands for the accessor authentication service:
 `python3 CreateAuthCommand.py -i <parameters_file.yaml`
-The **parameters_file.yaml** contains the authentication token parameters.
+Challenge command: # Generate a challenge
+  Name: AAS01      # Write a binary file containing a 128 bit challenge
+Challenge response:
+  Path: CP_AAS     # AAS certification path
+  Challenge: AAS01 # Write a binary file containing a 128 bit challenge
+  Name: aAAS-OP-GET-CHALLENGE-Service-Response
+Read Challenge response:
+  Name: aAAS-OP-GET-CHALLENGE-Service-Response
+Authenticate command:
+  Path: CP_AAA
+  AuthenticationToken: ATK-AAA-ECKA
+  Name: aAAS-OP-AUTHENTICATE-Service-Command
+Authenticate response:
+  AuthenticationToken: ATK-AAS-ECKA
+  Name: aAAS-OP-AUTHENTICATE-Service-Response 
+Generate shared key:
+  Private: ATK-AAA-ECKA
+  Public: ATK-AAS-ECKA
+  Diversifier: 'DD61116FF0DD57F48A4F52EE70276F24' # Root accessor identifier
+  Name: GCM_AAA_AAS
+Encrypt:
+  Name: GCM_AAA_AAS # Container for the derived keys/IV
+  MTU: 240
+  Sequence: 1
+  In: Text_In
+  Out: Text_Out
+Decrypt:
+  Name: GCM_AAA_AAS
+  MTU: 240
+  In: Text_Out
+  Out: Text_Out_bis
