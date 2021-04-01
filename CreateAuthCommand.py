@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.kdf.x963kdf import X963KDF
 from cryptography.x509.oid import NameOID
 
 import constante as cts
@@ -86,7 +86,7 @@ class SSPAuthenticationCommand:
                 v.tbs_certificate_bytes,
                 ec.ECDSA(hashes.SHA256())
                 )
-        print(m_aResponse)
+
 
     def generateAuthenticateCommand(self, parameters=None):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Command."""
@@ -158,17 +158,17 @@ class SSPAuthenticationCommand:
         # Compute the shared key
         shared_key = m_private_key.exchange(
             ec.ECDH(), m_public_key)
-        # Perform key derivation.
+        # Compute the diversifier from aChallenge and the gate identifier.
         m_diversifier = bytes(a ^ b for (a, b) in zip(
             m_token['tbsToken']['aATK-Content']['aChallenge'],
             bytes.fromhex(parameters[cts.KW_DIVERSIFIER])))
+        # Compute the shared info.
         m_SI = cts.SI_KEYS[m_key_size_idx] + m_diversifier
-        # Derive the key for the SI info
-        derived_key = HKDF(
+        # Derive the key for the shared info
+        derived_key = X963KDF(
             algorithm=hashes.SHA256(),
             length=cts.MD_LENGTH[m_key_size_idx],
-            salt=None,
-            info=m_SI,
+            sharedinfo=m_SI,
             backend=default_backend()
         ).derive(shared_key)
         # Storage of the GCM key and IV
@@ -254,6 +254,18 @@ class SSPAuthenticationCommand:
                 m, c = self.messageAssembly(m)
                 f.write(m)
 
+    def generateIVC(self, m_seq):
+        """Generate IVC (96 bit) from IV and SEQ."""
+        cipher = Cipher(
+            algorithms.AES(self.m_gcm_key),
+            modes.ECB(),
+            backend=default_backend())
+        encryptor = cipher.encryptor()
+        ivc = encryptor.update(
+            self.m_gcm_iv[0:16-cts.SCL_SIZE_SEQ] + m_seq
+            ) + encryptor.finalize()
+        return ivc[0:12]
+
     def messageFragment(self, message_fragment, cb):
         """ Create a message fragment."""
         PL = (len(message_fragment)+1) % 16
@@ -282,17 +294,19 @@ class SSPAuthenticationCommand:
 
     def encrypt(self, plaintext):
         m_seq = self.m_counter.to_bytes(cts.SCL_SIZE_SEQ, 'big')
+        ivc = self.generateIVC(m_seq)
         self.encryptor = Cipher(
             algorithms.AES(self.m_gcm_key),
-            modes.GCM(self.m_gcm_iv[0:16-cts.SCL_SIZE_SEQ] + m_seq),
+            modes.GCM(ivc),
             backend=default_backend()
-            ).encryptor()      
+            ).encryptor()
         # associated_data will be authenticated but not encrypted,
         # it must also be passed in on decryption.
         self.encryptor.authenticate_additional_data(b'')
         # Encrypt the plaintext and get the associated ciphertext.
         # GCM does not require padding.
-        ciphertext = self.encryptor.update(plaintext) + self.encryptor.finalize()
+        ciphertext = self.encryptor.update(plaintext) +\
+            self.encryptor.finalize()
         self.m_counter = self.m_counter + 1
         return (m_seq+ciphertext + self.encryptor.tag)
 
@@ -304,7 +318,7 @@ class SSPAuthenticationCommand:
         ctext = ciphertext[0:len_cipher-16]
         self.decryptor = Cipher(
             algorithms.AES(self.m_gcm_key),
-            modes.GCM(self.m_gcm_iv[0:16-cts.SCL_SIZE_SEQ] + m_seq, tag),
+            modes.GCM(self.generateIVC(m_seq), tag),
             backend=default_backend()
         ).decryptor()
 
