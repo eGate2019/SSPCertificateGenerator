@@ -76,6 +76,10 @@ The **parameters_file.yaml** contains the authentication token parameters.
         - RFC3279.asn     # ECC signature parameters
         - SSP_ASN.asn     # SSP model
 
+The autentication token can be dumped by using the online tool [here](https://lapo.it/asn1js/#).
+
+![ATK.AAA.ECKA dump](./ATK_DUMP.png)
+
 ## Generation of the accessor authentication commands and responses.
 The following command allows to generate the commands for the accessor authentication service:
 `python3 CreateAuthCommand.py -i <parameters_file.yaml`
