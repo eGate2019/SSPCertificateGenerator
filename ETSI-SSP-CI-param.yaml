@@ -1,0 +1,93 @@
+- Name: "ETSI-SSP-CI"
+  subject:
+    C: "FR"
+    ST: "PARIS"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
+  serial_number: 1
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "ETSI-SSP-CI"
+  extensions:
+    basicConstraints:
+      critical: True
+      value: 
+        CA: True
+        pathlen: 1
+
+- Name:  "ETSI-SSP-AAA-CA"
+  subject:
+    C: "FR"
+    ST: "PARIS"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
+  issuer: "ETSI-SSP-CI"
+  serial_number: 2
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  extensions:
+    basicConstraints:
+      critical: True
+      value: 
+        CA: True
+        pathlen: 0
+
+- Name:  "ETSI-SSP-AAS-CA"
+  subject:
+    C: "FR"
+    ST: "PARIS"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"  
+  serial_number: 3 
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "ETSI-SSP-CI"
+  extensions:
+    basicConstraints:
+      critical: True
+      value: 
+        CA: True
+        pathlen: 0
+    id-ce-CertificatePolicies:
+      type_name: 'certificatePolicies'
+      critical: TRUE
+      value: '0 4 0 3666 1 1'
+      subject:
+      issuer:        
+
+- Name: "ETSI-SSP-AAA-EE"
+  subject:
+    C: "FR"
+    ST: "PARIS"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
+  serial_number: 4 
+  issuer: "ETSI-SSP-CA-AAA"
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  extensions:
+    basicConstraints:
+      critical: True
+      value: 
+        CA: False
+- Name: "ETSI-SSP-AAS-EE"
+  subject:
+    C: "FR"
+    ST: "PARIS"
+    O: "ETSI-SSP-TTF"
+    OU: "ETSI"
+    CN: "ETSI.ORG"
+  serial_number: 5 
+  not_before: '2021-01-01T12:00:00' # YYYYMMDDhhmmssZ
+  not_after: '2021-12-01T12:00:00' # YYYYMMDDhhmmssZ
+  issuer: "ETSI-SSP-CA-AAS"
+  extensions:
+    basicConstraints:
+      critical: True
+      value: 
+        CA: False
+     

@@ -1,0 +1,490 @@
+SSPDefinitions { itu-t (0) identified-organization (4) etsi (0) smart-secure-platform (3666) part1 (1) }
+DEFINITIONS
+AUTOMATIC TAGS
+EXTENSIBILITY IMPLIED ::=
+BEGIN
+
+EXPORTS ALL;
+
+/* Imports */
+IMPORTS
+	Certificate,  -- RFC5280 Certificate X.509v3
+	id-pkix,
+	Extensions,  -- RFC5280 X.509v3 extension
+	Extension,
+	AlgorithmIdentifier,
+	Attribute,
+	AttributeType,
+	AttributeValue,
+	AttributeTypeAndValue,
+	SubjectPublicKeyInfo,
+	UniqueIdentifier,
+	Validity,
+	Version
+	FROM PKIX1Explicit88
+ECDSA-Sig-Value
+	FROM PKIX1Algorithms88;
+
+
+/* Basic types */
+maxUInt32 INTEGER ::= 4294967295
+UInt32 ::= INTEGER (0..maxUInt32)
+
+/* Common types */
+UUID ::= OCTET STRING (SIZE(16))
+URI ::= OCTET STRING
+Certificates ::= SET OF Certificate
+VersionType ::= OCTET STRING(SIZE(2)) -- major/minor version, coded as binary value on byte 1 and 2, e.g. '0F 00' for v15.0.
+
+
+AccessControl ::= SEQUENCE
+{
+	aAccessorIdentity AccessorIdentity,  -- Identity of the accessor accessing the resource
+	aAccessorRights AccessorRights,  -- Accessor rights (e.g. delete, update).
+	aGrantorIdentity AccessorIdentity OPTIONAL  -- Identity of the grantor
+}
+
+
+AccessorRights ::= BIT STRING
+{
+	eRight-Bit1 (0),
+	eRight-Bit2 (1),
+	eRight-Bit3 (2),
+	eRight-Bit4 (3),
+	eRight-Bit5 (4),
+	eRight-Bit6 (5),
+	eRight-Bit7 (6),
+	eRight-Bit8 (7),
+	eRight-Bit9 (8),
+	eRight-Bit10 (9),
+	eRight-Bit11 (10),
+	eRight-Bit12 (11),
+	eRight-Bit13 (12),
+	eRight-Bit14 (13),
+	eRight-Bit15 (14),
+	eRight-Bit16 (15),
+	eRight-Bit17 (16),
+	eRight-Bit18 (17),
+	eRight-Bit19 (18),
+	eRight-Bit20 (19),
+	eRight-Bit21 (20),
+	eRight-Bit22 (21),
+	eRight-Bit23 (22),
+	eRight-Bit24 (23),
+	eRight-Bit25 (24),
+	eRight-Bit26 (25),
+	eRight-Bit27 (26),
+	eRight-Bit28 (27),
+	eRight-Bit29 (28),
+	eRight-Bit30 (29),
+	eRight-Bit31 (30),
+	eRight-Bit32 (31)
+} (SIZE(32))
+
+
+AccessControlList ::= SET OF AccessControl  -- Access control list
+
+
+Accessor ::= [PRIVATE 8] CHOICE
+{
+	aAccessorGroup AccessorGroup,
+	aAccessorUser AccessorUser
+}
+
+AccessorGroup ::= SEQUENCE
+{
+	aAccessorIdentity AccessorIdentity,  -- Identity of the accessor
+	aMembersOfGroup SET OF AccessorIdentity,  -- Members of the group
+	aACL AccessControlList  -- Access control list
+}
+
+AccessorUser ::= SEQUENCE
+{
+	aAccessorIdentity AccessorIdentity,  -- Identity of the accessor
+	aAccessorConditions AccessorConditions OPTIONAL,  -- Accessor conditions
+	aACL AccessControlList  -- Access control list
+}
+
+
+AccessorIdentity ::= UUID  -- accessor identity
+
+
+AccessorConditions ::= SEQUENCE
+{
+	aAccessConditionsBiometry AccessorConditionsBiometry OPTIONAL,
+	aAccessConditionsPIN AccessorConditionsPIN OPTIONAL,
+	aAccessConditionsTokens AccessorConditionsToken OPTIONAL,
+	aAccessConditionHostDomain AccessConditionHostDomain OPTIONAL
+}
+
+
+AccessorConditionsBiometry ::= [PRIVATE 9] BIT STRING
+{
+	eReservedForFuture (0)  -- Reserved for future usage
+} (SIZE(32))
+
+
+AccessorConditionsPIN ::= [PRIVATE 10] BIT STRING
+{
+	ePinNumeric (0),  -- The user shall present a numeric PIN
+	ePinPassword (1),  -- The user shall present a password
+	ePinPattern (2)  -- The user shall present a graphical pattern
+} (SIZE(32))
+
+
+AccessorConditionsToken ::= [PRIVATE 11] BIT STRING
+{
+	eTokenCertificate (0)  -- A token verification by using the certificate shall be performed
+} (SIZE(32))
+
+
+AccessConditionHostDomain ::= [PRIVATE 12] BOOLEAN
+
+
+eAASAccessRight-RequiresSecurePipe AccessorRights ::= {eRight-Bit1 }
+eAASAccessRight-Create AccessorRights ::= { eRight-Bit2 }
+eAASAccessRight-Delete AccessorRights ::= { eRight-Bit3 }
+eAASAccessRight-Update AccessorRights ::= { eRight-Bit4 }
+eAASAccessRight-UpdateACL AccessorRights ::= { eRight-Bit5 }
+eAASAccessRight-UpdateGroup AccessorRights ::= { eRight-Bit6 }
+eAASAccessRight-UpdateCredentialPolicy AccessorRights ::= { eRight-Bit7 }
+eAASAccessRight-UpdateCredentialStatus AccessorRights ::= { eRight-Bit8 }
+
+
+/* Maximum size of each side of the entry panel for pattern */
+maxEntryPanelDimension INTEGER ::= 10
+
+/* Coordinate of point in pattern from the top-left corner, starting with index 1 */
+PatternPoint ::= SEQUENCE
+{
+	x INTEGER (1.. maxEntryPanelDimension),  -- X coordinate
+	y INTEGER (1.. maxEntryPanelDimension)  -- Y coordinate
+}
+maxLenthPath INTEGER ::= 4 --Maximal length of a AAS certification path 
+maxCI		 INTEGER ::= 4 --Maximal of CI certificate for verifying the AAA certification path
+TokenCredential ::=SEQUENCE
+{
+	aCertificatesAAS [0] Certificates (SIZE(1..maxLenthPath)),  -- Set of X.509 certificates of the accessor authentication service
+	aCertificateCIAAA[1] Certificates (SIZE(1..maxCI)) OPTIONAL --Certificates of the CI of the accessor authentication application
+}
+AccessorCredentials ::= [PRIVATE 13] SEQUENCE
+{
+	-- Credentials of type PIN
+	aPinNumericCredential [0] NumericString (SIZE(4..255)) OPTIONAL,  -- Numeric PIN
+	aPinPasswordCredential [1] PrintableString (SIZE(4..255)) OPTIONAL,  -- Password
+	aPinPatternCredential [2] SEQUENCE (SIZE(4..255)) OF PatternPoint  OPTIONAL,  -- Graphical pattern
+
+	-- Credentials for the token based verification
+	aTokenCredential  [10] TokenCredential OPTIONAL,  -- Set of X.509 certificates of the AAS certification path and set of AAA CIs
+	-- Credentials of type host domain
+	aHostDomainCredential [20] SET OF UUID OPTIONAL  -- Set of SCL host domains
+
+	-- Credentials of type biometric: for future usage
+}
+
+
+PinNumericPolicy ::= SEQUENCE
+{
+	aIsDisableForbidden BOOLEAN DEFAULT FALSE,  -- Disabling forbidden
+	aMinSize INTEGER (4..255) DEFAULT 4,  -- Minimum size of PIN
+	aMaxSize INTEGER (4..255) DEFAULT 255,  -- Maximum size of PIN
+	aMaxAttempts INTEGER (0..255) DEFAULT 0  -- Maximum number of attempts
+}
+
+PinPasswordPolicy ::= SEQUENCE
+{
+	aMinSize INTEGER (4..255) DEFAULT 4,  -- Minimum length of password
+	aMaxSize INTEGER (4..255) DEFAULT 255,  -- Maximum length of password
+	aRequiresLowerCaseLetter BOOLEAN DEFAULT FALSE,  -- At least one lower case letter is required
+	aRequiresUpperCaseLetter BOOLEAN DEFAULT FALSE,  -- At least one upper case letter is required
+	aRequiresNumber BOOLEAN DEFAULT FALSE,  -- At least on numeric digit is required
+	aRequiresSymbol BOOLEAN DEFAULT FALSE,  -- At least one special character is required
+	aMaxAttempts INTEGER (0..255) DEFAULT 0  -- Maximum number of attempts
+}
+
+PinPatternPolicy ::= SEQUENCE
+{
+	aMinSize INTEGER (4..255) DEFAULT 4,  -- Minimum number of points in pattern
+	aMaxSize INTEGER (4..255) DEFAULT 255,  -- Maximum number of points in pattern
+	aEntryPanelMinSize INTEGER (3.. maxEntryPanelDimension) DEFAULT 3,
+	aSamePointMultipleTimes BOOLEAN DEFAULT FALSE,  -- If a point can occur multiple times
+	aMaxAttempts INTEGER (0..255) DEFAULT 0  -- Maximum number of attempts
+}
+
+AccessorCredentialsPolicy ::= SEQUENCE
+{
+	aPinNumericPolicy PinNumericPolicy OPTIONAL,  -- Numeric PIN policy
+	aPinPasswordPolicy PinPasswordPolicy OPTIONAL,  -- Password policy
+	aPinPatternPolicy PinPatternPolicy OPTIONAL  -- Graphical pattern policy
+}
+
+
+AccessorCommonCredentialStatus ::= SEQUENCE
+{
+	aIsDisabled BOOLEAN DEFAULT TRUE,  -- indicates if credential is disabled
+	aRemainingAttempts INTEGER (0..255) OPTIONAL  -- remaining number of attempts
+}
+
+PinNumericCredentialStatus ::= SEQUENCE
+{
+	aCommonStatus AccessorCommonCredentialStatus
+}
+
+PinPasswordCredentialStatus ::= SEQUENCE
+{
+	aCommonStatus AccessorCommonCredentialStatus
+}
+
+PinPatternCredentialStatus ::= SEQUENCE
+{
+	aCommonStatus AccessorCommonCredentialStatus
+}
+
+AccessorCredentialsStatus ::= SEQUENCE
+{
+	aPinNumericStatus PinNumericCredentialStatus OPTIONAL,
+	aPinPasswordStatus PinPasswordCredentialStatus OPTIONAL,
+	aPinPatternStatus PinPatternCredentialStatus OPTIONAL
+}
+
+
+AAS-GET-CAPABILITIES-Type ::= ENUMERATED
+{
+	eGlobalAuthenticationService (0),  -- retrieve user accessors available in the SSP host
+	eAccessorStatus (1)  -- retrieve status related to the accessor authentication service gate
+}
+
+AAS-OP-GET-CAPABILITIES-Service-Command ::= [PRIVATE 16] SEQUENCE
+{
+aRequestType AAS-GET-CAPABILITIES-Type
+}
+
+
+AAS-OP-GET-CAPABILITIES-Service-Response-Parameter ::= CHOICE
+{
+	aGlobalAuthenticationService SEQUENCE  -- for aRequestType set to eGlobalAuthenticationService
+	{
+		aAASVersion VersionType,  -- release of the AAS service
+		aAccessorList SET OF Accessor  -- List of accessors
+
+	},
+	aAccessorStatus SEQUENCE  -- for aRequestType set to eAccessorStatus
+	{
+		aIsAuthenticated BOOLEAN,  -- indicates if the accessor is authenticated
+		aAccessorConditions AccessorConditions,  -- accessor conditions
+		aAccessorCredentialsStatus AccessorCredentialsStatus OPTIONAL,  -- status of credentials of the accessor
+		aAccessorCredentialsPolicy AccessorCredentialsPolicy OPTIONAL -- policies for the credentials of the accessor
+	}
+}
+
+AAS-OP-GET-CAPABILITIES-Service-Response ::= [PRIVATE 16] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK,
+	aParameter AAS-OP-GET-CAPABILITIES-Service-Response-Parameter OPTIONAL
+}
+
+
+AAS-ADMIN-CREATE-ACCESSOR-Service-Command ::= [PRIVATE 17] SEQUENCE
+{
+	aAccessor Accessor,  -- Accessor to be created
+	aAccessorConditions AccessorConditions OPTIONAL, -- Accessor credential conditions
+	aCredential AccessorCredentials OPTIONAL,  -- Credentials for the accesAAS-ADMIN-CREATE-ACCESSOR-Service-Commandsor
+	aCredentialsPolicy AccessorCredentialsPolicy OPTIONAL,  -- Policy for the provided accessors
+	aCredentialsStatus AccessorCredentialsStatus OPTIONAL  -- Status of credentials
+}
+
+
+AAS-ADMIN-CREATE-ACCESSOR-Service-Response ::= [PRIVATE 17] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK
+}
+
+
+AAS-ADMIN-UPDATE-ACCESSOR-Service-Command ::= [PRIVATE 18] SEQUENCE
+{
+	aAccessorIdentity AccessorIdentity,  -- Identity of the accessor
+	aMembersOfGroup SET OF AccessorIdentity OPTIONAL,  -- Members of the group
+	aACL AccessControlList OPTIONAL,  -- Access control list
+	aSetAccessorConditions AccessorConditions OPTIONAL,  -- Conditions to be set
+	aRemoveAccessorConditions AccessorConditions OPTIONAL,  -- Conditions to be removed
+	aSetCredential AccessorCredentials OPTIONAL,  -- Credentials to be set
+	aRemoveCredential AccessorConditions OPTIONAL,  -- List of credentials to be removed
+	aCredentialsPolicy AccessorCredentialsPolicy OPTIONAL,  -- Credential policy
+	aCredentialsStatus AccessorCredentialsStatus OPTIONAL  -- Status of credentials
+}
+
+
+AAS-ADMIN-UPDATE-ACCESSOR-Service-Response ::= [PRIVATE 18] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK
+}
+
+
+AAS-ADMIN-DELETE-ACCESSOR-Service-Command ::= [PRIVATE 19] SEQUENCE
+{
+	aAccessorIdentity AccessorIdentity  -- Identity of the accessor to delete
+}
+
+
+AAS-ADMIN-DELETE-ACCESSOR-Service-Response ::= [PRIVATE 19] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK
+}
+
+AccessorTokenCredential ::= SEQUENCE
+{
+		aToken AuthenticationToken, --The authentication token
+		aTokenCertificationPath [20] Certificates (SIZE(1..maxLenthPath)) -- the certification path for verifying the authentication token
+}
+
+AAS-OP-AUTHENTICATE-ACCESSOR-Service-Command ::= [PRIVATE 22] SEQUENCE
+{
+	aCredential CHOICE
+	{
+		aPinNumericCredential [10] NumericString,  -- Numeric PIN
+		aPinPasswordCredential [11] PrintableString,  -- Password
+		aPinPatternCredential [12] SEQUENCE (SIZE(4..255)) OF PatternPoint,  -- Graphical pattern
+		aAccessorTokenCredential[13] AccessorTokenCredential , --authentication credential
+		aHostDomainCredential [30] NULL
+	} OPTIONAL
+}
+
+
+AAS-OP-AUTHENTICATE-ACCESSOR-Service-Response-Parameter ::= CHOICE
+{
+	aCredentialsStatus AccessorCredentialsStatus ,  -- Status of credentials after the command
+	aServiceToken AuthenticationToken  -- the token generated by the accessor authentication service
+}
+
+AAS-OP-AUTHENTICATE-ACCESSOR-Service-Response ::= [PRIVATE 22] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK,
+	aParameter AAS-OP-AUTHENTICATE-ACCESSOR-Service-Response-Parameter OPTIONAL
+}
+
+
+AAS-OP-ACCESS-SERVICE-Service-Command ::= [PRIVATE 20] SEQUENCE
+{
+	aServiceIdentifier UUID,  -- Identifier of the service gate
+	aUseSecurePipe BOOLEAN DEFAULT FALSE  -- Indication of secure pipe is requested
+}
+
+
+AAS-OP-ACCESS-SERVICE-Service-Response-Parameter ::= SEQUENCE
+{
+	aGateIdentifier UUID  -- Identifier of the service gate
+}
+
+AAS-OP-ACCESS-SERVICE-Service-Response ::= [PRIVATE 20] SEQUENCE
+{
+	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK,
+	aParameter AAS-OP-ACCESS-SERVICE-Service-Response-Parameter OPTIONAL
+}
+
+
+AAS-OP-GET-CHALLENGE-Service-Command ::= [PRIVATE 21] SEQUENCE
+{
+}
+
+
+AAS-OP-GET-CHALLENGE-Service-Response-Parameter ::= SEQUENCE
+{
+	aChallenge OCTET STRING (SIZE (16)),
+	aCertificates Certificates  -- Certificates of the accessor authentication service
+}
+
+AAS-OP-GET-CHALLENGE-Service-Response ::= [PRIVATE 21] SEQUENCE
+{
+ 	aAAS-Service-Response AAS-Service-Response DEFAULT eAAS-OK,
+	aParameter AAS-OP-GET-CHALLENGE-Service-Response-Parameter OPTIONAL
+}
+
+AAS-Service-Response ::= ENUMERATED
+{
+	eAAS-OK (0),  -- Operation successful
+	eAAS-E-CMD-PAR-UNKNOWN (2),  -- Unknown parameters used for an operation
+	eAAS-E-NOK (3),  -- Operation failed
+	eAAS-ACL-RULES-VIOLATIONS (14),  -- The operation violates the ACL conditions
+	eAAS-NOT-AUTHENTICATED (15),  -- The accessor is not authenticated
+	eAAS-POLICY-RULES-VIOLATIONS (16)  -- The operation violates the credentials policy
+}
+
+
+AAS-CONTROL-SERVICE-GATE-Commands ::= [APPLICATION 2] CHOICE
+{
+	aAAS-OP-GET-CAPABILITIES-Service-Command AAS-OP-GET-CAPABILITIES-Service-Command,
+	aAAS-ADMIN-CREATE-ACCESSOR-Service-Command AAS-ADMIN-CREATE-ACCESSOR-Service-Command,
+	aAAS-ADMIN-UPDATE-ACCESSOR-Service-Command AAS-ADMIN-UPDATE-ACCESSOR-Service-Command,
+	aAAS-ADMIN-DELETE-ACCESSOR-Service-Command AAS-ADMIN-DELETE-ACCESSOR-Service-Command,
+	aAAS-OP-ACCESS-SERVICE-Service-Command AAS-OP-ACCESS-SERVICE-Service-Command,
+	aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Command AAS-OP-AUTHENTICATE-ACCESSOR-Service-Command,
+	aAAS-OP-GET-CHALLENGE-Service-Command AAS-OP-GET-CHALLENGE-Service-Command
+}
+
+
+AAS-CONTROL-SERVICE-GATE-Responses ::= [APPLICATION 1] CHOICE
+{
+	aAAS-OP-GET-CAPABILITIES-Service-Response AAS-OP-GET-CAPABILITIES-Service-Response,
+	aAAS-ADMIN-CREATE-ACCESSOR-Service-Response AAS-ADMIN-CREATE-ACCESSOR-Service-Response,
+	aAAS-ADMIN-UPDATE-ACCESSOR-Service-Response AAS-ADMIN-UPDATE-ACCESSOR-Service-Response,
+	aAAS-ADMIN-DELETE-ACCESSOR-Service-Response AAS-ADMIN-DELETE-ACCESSOR-Service-Response,
+	aAAS-OP-ACCESS-SERVICE-Service-Response AAS-OP-ACCESS-SERVICE-Service-Response,
+	aAAS-OP-AUTHENTICATE-ACCESSOR-Service-Response AAS-OP-AUTHENTICATE-ACCESSOR-Service-Response,
+	aAAS-OP-GET-CHALLENGE-Service-Response AAS-OP-GET-CHALLENGE-Service-Response
+}
+
+
+AuthenticationToken ::= SEQUENCE
+{
+	tbsToken TBSToken,
+	signatureAlgorithm AlgorithmIdentifier,
+	signature ECDSA-Sig-Value 
+}
+
+TBSToken ::= SEQUENCE
+{
+	version [0] Version DEFAULT v1,
+	subjectPublicKeyInfo SubjectPublicKeyInfo,
+	aATK-Content ATK-Content,
+	signatureAlgorithm[9] AlgorithmIdentifier,
+	extensions [8] Extensions OPTIONAL
+}
+
+Key-Size ::= INTEGER
+{
+	e128 (0),  -- 128 Bit Key size
+	e256 (1)  -- 256 Bit Key size
+}
+
+StreamCipherIdentifier ::= INTEGER
+{
+	aAES-CGM-StreamCipherIdentifier (0)  -- AES GCM algorithm
+}
+ 
+ATK-Content ::= SEQUENCE 
+{
+	aChallenge OCTET STRING (SIZE (16)),  -- Challenge	
+	aKey-Size Key-Size,
+	aStreamCipherIdentifier StreamCipherIdentifier
+}
+
+
+id-ssp OBJECT IDENTIFIER ::= { itu-t (0) identified-organization (4) etsi (0) smart-secure-platform (3666) part1 (1) }
+id-role OBJECT IDENTIFIER ::= { id-ssp role (1) }
+id-role-aaa OBJECT IDENTIFIER ::= { id-role aaa (1) }
+id-role-aas OBJECT IDENTIFIER ::= { id-role aas (2) }
+
+aResponse19 FS-CONTROL-SERVICE-GATE-Responses ::= 
+aFS-ADMIN-GET-CAPABILITIES-Service-Response : {
+  aFS-Service-Response eFS-OK,
+  aParameter {
+    aVersion '0000'H /*<COMPARE(FSSVERSION,GT,EQ)>*/,
+    aSimultaneousFileSessions 1/* <COMPARE (MAXFILESESSIONS,GT,EQ)> */,
+    aSimultaneousFileSessionsPerFile 1/*<COMPARE (MAXFILESESSIONS_PER_FILE,GT,EQ)> */,
+    aTotalCapacity 0/*<COMPARE(CAPACITY,GT,EQ)>*/,
+    aFreeCapacity 0/*<COMPARE(FREE_CAPACITY,GT,EQ)>*/,
+    aMaxMetaDataSizePerNode 0 /*<COMPARE(MAXMETADATA_PER_NODE,GT,EQ)>*/
+  }
+}
+
+END

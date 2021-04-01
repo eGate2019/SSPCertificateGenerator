@@ -1,0 +1,23 @@
+Challenge:
+  Generate: false # Do not generate a challenge
+  Name: AAS01     # File name of the file containing the challenge
+CertificationPath: 
+  Name: CP_AAA    # File name of the DER file containing the certification path
+  Path:
+    - ETSI-SSP-AAA-CI # AAA CI
+    - ETSI-SSP-AAA-CA # AAA CA
+    - ETSI-SSP-AAA-EE # AAA EE
+  Modeles:
+    - RFC5280.asn     # x509v3 certificate model
+    - RFC3279.asn     # ECC signature parameters
+AuthenticationToken:  
+  Name: ATK-AAA-ECKA    # File name of the authentication token DER file
+  Issuer: ETSI-SSP-AAA-EE # Certificatte verifying the authentication token
+  ECKA-Curve: BrainpoolP256R1 # ECC curve for key agreement
+  KeySize: 256  # key size of the streamcipher
+  Modeles: 
+    - RFC5280.asn     # x509v3 certificate model
+    - RFC3279.asn     # ECC signature parameters
+    - SSP_ASN.asn
+
+     

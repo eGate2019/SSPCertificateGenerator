@@ -1,0 +1,37 @@
+Challenge command: # Generate a challenge
+  Name: AAS01      # Write a binary file containing a 128 bit challenge
+Challenge response:
+  Path: CP_AAS     # AAS certification path
+  Challenge: AAS01 # Write a binary file containing a 128 bit challenge
+  Name: aAAS-OP-GET-CHALLENGE-Service-Response
+Read Challenge response:
+  Name: aAAS-OP-GET-CHALLENGE-Service-Response
+Authenticate command:
+  Path: CP_AAA
+  AuthenticationToken: ATK-AAA-ECKA
+  Name: aAAS-OP-AUTHENTICATE-Service-Command
+Authenticate response:
+  AuthenticationToken: ATK-AAS-ECKA
+  Name: aAAS-OP-AUTHENTICATE-Service-Response 
+OAS command:
+  Name: OAS_COMMAND
+  Service Identifier: 'DD61116FF0DD57F48A4F52EE70276F24' # Root accessor identifier
+OAS response:
+  Name: OAS_RESPONSE
+Read OAS response:
+  Name: OAS_RESPONSE  
+Generate shared key:
+  Private: ATK-AAA-ECKA
+  Public: ATK-AAS-ECKA
+  Name: GCM_AAA_AAS
+Encrypt:
+  Name: GCM_AAA_AAS # Container for the derived keys/IV
+  MTU: 240
+  Sequence: 1
+  In: Text_In
+  Out: Text_Out
+Decrypt:
+  Name: GCM_AAA_AAS
+  MTU: 240
+  In: Text_Out
+  Out: Text_Out_bis

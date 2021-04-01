@@ -1,0 +1,77 @@
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1
+        Explicit_text: id-role      
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: true
+        Pathlen: 1
+  Serial_number: 1
+  Not_after: '2021-12-01T12:00:00'
+  Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1.2
+        Explicit_text: id-role-AAA
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: true
+        Pathlen: 0
+  Serial_number: 3
+  Not_after: '2021-12-01T12:00:00'
+  Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CI
+    O: ETSI.ORG
+    OU: SSP-TTF
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
+- Extensions:
+    CertificatePolicies:
+      Critical: true
+      Value:
+        Identifier: 0.4.0.3666.1.2.1
+        Explicit_text: id-role-aaa-application
+    BasicConstraints:
+      Critical: true
+      Value:
+        CA: false
+  Serial_number: 5
+  Not_after: '2021-12-01T12:00:00'
+  Not_before: '2021-01-01T12:00:00'
+  Issuer:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-CA
+    O: ETSI.ORG
+    OU: SSP-TTF
+  Subject:
+    C: FR
+    ST: PACA
+    CN: ETSI-SSP-AAA-EE
+    O: ETSI.ORG
+    OU: SSP-TTF
