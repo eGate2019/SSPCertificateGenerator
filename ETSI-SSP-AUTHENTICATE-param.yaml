@@ -13,10 +13,16 @@ Authenticate command:
 Authenticate response:
   AuthenticationToken: ATK-AAS-ECKA
   Name: aAAS-OP-AUTHENTICATE-Service-Response 
+OAS command:
+  Name: OAS_COMMAND
+  Service Identifier: 'DD61116FF0DD57F48A4F52EE70276F24' # Root accessor identifier
+OAS response:
+  Name: OAS_RESPONSE
+Read OAS response:
+  Name: OAS_RESPONSE  
 Generate shared key:
   Private: ATK-AAA-ECKA
   Public: ATK-AAS-ECKA
-  Diversifier: 'DD61116FF0DD57F48A4F52EE70276F24' # Root accessor identifier
   Name: GCM_AAA_AAS
 Encrypt:
   Name: GCM_AAA_AAS # Container for the derived keys/IV

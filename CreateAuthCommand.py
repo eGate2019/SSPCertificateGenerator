@@ -1,4 +1,4 @@
-
+import uuid
 import asn1tools
 import yaml
 from cryptography import x509
@@ -87,7 +87,6 @@ class SSPAuthenticationCommand:
                 ec.ECDSA(hashes.SHA256())
                 )
 
-
     def generateAuthenticateCommand(self, parameters=None):
         """ Generate the AAS-OP-AUTHENTICATE-Service-Command."""
         with open(cts.PATH_CREDENTIALS + parameters[cts.KW_PATH] +
@@ -161,7 +160,7 @@ class SSPAuthenticationCommand:
         # Compute the diversifier from aChallenge and the gate identifier.
         m_diversifier = bytes(a ^ b for (a, b) in zip(
             m_token['tbsToken']['aATK-Content']['aChallenge'],
-            bytes.fromhex(parameters[cts.KW_DIVERSIFIER])))
+            self.m_aGateIdentifier))
         # Compute the shared info.
         m_SI = cts.SI_KEYS[m_key_size_idx] + m_diversifier
         # Derive the key for the shared info
@@ -187,6 +186,49 @@ class SSPAuthenticationCommand:
                   ".der",
                   "wb") as f:
             f.write(m_save_der)
+
+    def generateOAScommand(self, parameters=None):
+        """Generate the AAS-OP-ACCESS-SERVICE-Service-Command command."""
+        m_aas_command = self.model.encode(
+            'AAS-CONTROL-SERVICE-GATE-Commands',
+            ('aAAS-OP-ACCESS-SERVICE-Service-Command', {
+                'aServiceIdentifier':  bytes.fromhex(parameters[cts.KW_SI]),
+                'aUseSecurePipe': True
+                }
+             )
+        )
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der",
+                  "wb") as f:
+            f.write(m_aas_command)
+
+    def generateOASresponse(self, parameters=None):
+        """ Generate the AAS-OP-ACCESS-SERVICE-Service-Response."""
+        aRand = uuid.uuid4()
+        m_aGateIdentifier = uuid.uuid5(namespace=uuid.NAMESPACE_DNS,
+                                       name=aRand.urn
+                                       )
+        m_aas_command = self.model.encode(
+            'AAS-CONTROL-SERVICE-GATE-Responses',
+            ('aAAS-OP-ACCESS-SERVICE-Service-Response', {
+                'aParameter': {'aGateIdentifier': m_aGateIdentifier.bytes}
+                }
+             )
+        )
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der",
+                  "wb") as f:
+            f.write(m_aas_command)
+
+    def readOASResponse(self, parameters=None):
+        """ Read the AAS-OP-ACCESS-SERVICE-Service-Response."""
+        with open(cts.PATH_CREDENTIALS + parameters[cts.KW_NAME] +
+                  ".der", "rb") as f:
+            aResponse = f.read()
+        m_aResponse = self.model.decode('AAS-CONTROL-SERVICE-GATE-Responses',
+                                        aResponse)
+        self.m_aGateIdentifier =\
+            m_aResponse[1]['aParameter']['aGateIdentifier']
 
     def encryptLargeMessage(self, parameters=None):
         """Encrypt large message from an input file."""
@@ -366,5 +408,11 @@ if __name__ == "__main__":
                         m_auth.encryptLargeMessage(parameters)
                     if m_token == cts.KW_DECRYPT:
                         m_auth.decryptLargeMessage(parameters)
+                    if m_token == cts.KW_OAS_COMMAND:
+                        m_auth.generateOAScommand(parameters)
+                    if m_token == cts.KW_OAS_RESPONSE:
+                        m_auth.generateOASresponse(parameters)
+                    if m_token == cts.KW_READ_OAS_RESPONSE:
+                        m_auth.readOASResponse(parameters)
     except ValueError as e:
         print("Oops!..", e)
