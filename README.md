@@ -2,11 +2,13 @@
 ## Overview
 This set of programs and files aims at generating the x509v3 certificates used for the Accessor Authentication Service as described in the annex C of the [TS 103.666 part 1 V15.2.0  (2020-04)](https://www.etsi.org/deliver/etsi_ts/103600_103699/10366601/15.00.00_60/ts_10366601v150000p.pdf) .
 ## Installation
-OpenSSL 3.0.0 shall be installed. The guidline for performing the installation are availabe in [OpenSSL](https://www.openssl.org)
-Python Cryptography package shall be installed. The guidline for performing the installation are availabe in [Cryptography.io](https://cryptography.io/en/latest/installation.html) .
+OpenSSL 3.0.0 shall be installed and the guidlines for this installation are availabe in [OpenSSL](https://www.openssl.org).
+
+Python Cryptography package shall be installed. The guidlines for this installation are availabe in [Cryptography.io](https://cryptography.io/en/latest/installation.html) .
+
 ## Generation of the private and public keys
 The batch file GENKEY.bat contains the OpenSSL instruction for generating the private and public keys acccording to the the annex C of the TS 103.666 part 1.
-The following shell command shall be executed.
+The following shell command has been executed for the generation of the private keys available in this repository.
 
 `./GENKEY.bat`
 
@@ -19,8 +21,8 @@ The **parameters_file.yaml** contains the certificate parameters.
 The certificates are generated and stored in the **./certificates** directory with the DER and PEM format.
 The human readable visualization is possible on the following web site [Certlogic](https://certlogik.com/decoder)
 ## Certificate parameters
-Each certificate has its parameters in a YAML structure in a YAML file.
-As example, the YAML structure of the AAS certification path from the CI to the End Entity certificate is the following:
+Each certificate has its parameters according to YAML structure in a YAML file.
+As example, the YAML structure of the ETSI-SSP-AAA-CA certificate in the AAA certification path is the following:
 
     - Extensions:
         CertificatePolicies:
@@ -48,6 +50,7 @@ As example, the YAML structure of the AAS certification path from the CI to the 
             CN: ETSI-SSP-AAA-CA
             O: ETSI.ORG
             OU: SSP-TTF
+The YAML files available in the repository contain the desription for all required certificates for a given certification path.
 ## Generation of the authentication token
 The following command allows to generate an authentication token:
 `python3 CreateToken.py -i <parameters_file.yaml`
@@ -58,7 +61,7 @@ The **parameters_file.yaml** contains the authentication token parameters.
     Generate: false # Do not generate a challenge
     Name: AAS01     # File name of the file containing the challenge
     CertificationPath: 
-    Name: CP_AAA    # File name of the DER file containing the certification path
+    Name: CP_AAA    # File name of the DER file containing the certification path (set of certificates)
     Path:
         - ETSI-SSP-AAA-CI # AAA CI
         - ETSI-SSP-AAA-CA # AAA CA
@@ -76,7 +79,7 @@ The **parameters_file.yaml** contains the authentication token parameters.
         - RFC3279.asn     # ECC signature parameters
         - SSP_ASN.asn     # SSP model
 
-The autentication token can be dumped by using the online tool [here](https://lapo.it/asn1js/#).
+The authentication token can be dumped by using the online tool [here](https://lapo.it/asn1js/#).
 
 ![ATK.AAA.ECKA dump](./ATK_DUMP.png)
 
